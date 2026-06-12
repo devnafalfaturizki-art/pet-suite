@@ -20,7 +20,10 @@ export default function PortalLayout() {
             <Link to="/portal/pets" className={navLinkClasses}>Pets</Link>
             <Link to="/portal/appointments" className={navLinkClasses}>Appointments</Link>
             <Link to="/portal/invoices" className={navLinkClasses}>Invoices</Link>
-            <Link to="/profile" className={navLinkClasses}>My Profile</Link>
+            <Link to="/portal/profile" className={navLinkClasses}>Profile</Link>
+            <Link to="/portal/inpatient" className={navLinkClasses}>Inpatient</Link>
+            <Link to="/portal/grooming" className={navLinkClasses}>Grooming</Link>
+            <Link to="/portal/notifications" className={navLinkClasses}>Notifications</Link>
           </div>
         </div>
       </header>

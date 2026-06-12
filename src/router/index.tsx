@@ -13,6 +13,10 @@ import PortalPetsPage from '@/features/portal/pages/PortalPetsPage';
 import PortalAppointmentsPage from '@/features/portal/pages/PortalAppointmentsPage';
 import PortalInvoicesPage from '@/features/portal/pages/PortalInvoicesPage';
 import PortalPetDetailPage from '@/features/portal/pages/PortalPetDetailPage';
+import PortalInpatientPage from '@/features/portal/pages/PortalInpatientPage';
+import PortalGroomingPage from '@/features/portal/pages/PortalGroomingPage';
+import PortalNotificationsPage from '@/features/portal/pages/PortalNotificationsPage';
+import PortalProfilePage from '@/features/portal/pages/PortalProfilePage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { protectedRoutes, renderProtectedRoute } from '@/router/route-config';
@@ -35,6 +39,10 @@ export function AppRoutes() {
         <Route path="portal/pets" element={<CustomerRoute><PortalPetsPage /></CustomerRoute>} />
         <Route path="portal/pets/:id" element={<CustomerRoute><PortalPetDetailPage /></CustomerRoute>} />
         <Route path="portal/appointments" element={<CustomerRoute><PortalAppointmentsPage /></CustomerRoute>} />
+        <Route path="portal/inpatient" element={<CustomerRoute><PortalInpatientPage /></CustomerRoute>} />
+        <Route path="portal/grooming" element={<CustomerRoute><PortalGroomingPage /></CustomerRoute>} />
+        <Route path="portal/notifications" element={<CustomerRoute><PortalNotificationsPage /></CustomerRoute>} />
+        <Route path="portal/profile" element={<CustomerRoute><PortalProfilePage /></CustomerRoute>} />
         <Route path="portal/invoices" element={<CustomerRoute><PortalInvoicesPage /></CustomerRoute>} />
       </Route>
 

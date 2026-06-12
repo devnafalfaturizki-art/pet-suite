@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { portalService } from './portal.service';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function usePortalCustomerId(profileId?: string) {
   return useQuery(['portalCustomerId', profileId], () => (profileId ? portalService.getCustomerIdByProfileId(profileId) : Promise.resolve(null)), {
@@ -29,9 +30,82 @@ export function usePortalPet(customerId?: string, petId?: string) {
   );
 }
 
+export function usePortalPetById(petId?: string) {
+  return useQuery(['portalPetById', petId], () => (petId ? portalService.getMyPetById(petId) : null), {
+    enabled: Boolean(petId)
+  });
+}
+
+export function usePortalPetMedicalRecords(petId?: string) {
+  return useQuery(['portalPetMedicalRecords', petId], () => (petId ? portalService.getMyPetMedicalRecords(petId) : []), {
+    enabled: Boolean(petId)
+  });
+}
+
+export function usePortalPetVaccinations(petId?: string) {
+  return useQuery(['portalPetVaccinations', petId], () => (petId ? portalService.getMyPetVaccinations(petId) : []), {
+    enabled: Boolean(petId)
+  });
+}
+
+export function usePortalPetWeightHistory(petId?: string) {
+  return useQuery(['portalPetWeight', petId], () => (petId ? portalService.getMyPetWeightHistory(petId) : []), {
+    enabled: Boolean(petId)
+  });
+}
+
+export function usePortalPetMedications(petId?: string) {
+  return useQuery(['portalPetMedications', petId], () => (petId ? portalService.getMyPetMedications(petId) : []), {
+    enabled: Boolean(petId)
+  });
+}
+
+export function usePortalInpatientRecords(customerId?: string) {
+  return useQuery(['portalInpatientRecords', customerId], () => (customerId ? portalService.getMyInpatientRecords() : []), {
+    enabled: Boolean(customerId)
+  });
+}
+
+export function usePortalInpatientObservations(customerId?: string, recordId?: string) {
+  return useQuery(['portalInpatientObservations', customerId, recordId], () => (recordId ? portalService.getMyInpatientObservations(recordId) : []), {
+    enabled: Boolean(customerId && recordId)
+  });
+}
+
+export function usePortalGroomingRecords(customerId?: string) {
+  return useQuery(['portalGroomingRecords', customerId], () => (customerId ? portalService.getMyGroomingRecords() : []), {
+    enabled: Boolean(customerId)
+  });
+}
+
+export function usePortalNotifications() {
+  return useQuery(['portalNotifications'], () => portalService.getMyNotifications());
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation(() => portalService.markAllNotificationsRead(), {
+    onSuccess: () => qc.invalidateQueries(['portalNotifications'])
+  });
+}
+
+export function useUpdateMyProfile() {
+  const qc = useQueryClient();
+  return useMutation((data: { fullName: string; whatsapp: string; address: string }) => portalService.updateMyProfile(data), {
+    onSuccess: () => qc.invalidateQueries(['portalCustomer'])
+  });
+}
+
 export function usePortalAppointments(customerId?: string) {
   return useQuery(['portalAppointments', customerId], () => (customerId ? portalService.getUpcomingAppointments(customerId) : []), {
     enabled: Boolean(customerId)
+  });
+}
+
+export function useCancelAppointment() {
+  const qc = useQueryClient();
+  return useMutation((appointmentId: string) => portalService.cancelAppointment(appointmentId), {
+    onSuccess: () => qc.invalidateQueries(['portalAppointments'])
   });
 }
 
