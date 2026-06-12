@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { Pet, PetFormData, SpeciesOption, BreedOption } from './pets.types';
 
 const PET_SELECT = `id, name, customer_id, photo_url, species_id, breed_id, gender, birth_date, weight, color, is_sterilized, microchip_number, qr_code, is_active, created_at, updated_at, species(name), breeds(name), customers(full_name)`;
@@ -34,27 +35,27 @@ export const petsService = {
     if (search) query = query.ilike('name', `%${search}%`);
     if (speciesId) query = query.eq('species_id', speciesId);
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     const items = (res.data || []).map(mapPet);
     return { items, total: res.count ?? items.length };
   },
 
   async getPetById(id: string): Promise<Pet | null> {
     const { data, error } = await supabase.from('pets').select(PET_SELECT).eq('id', id).single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) return null;
     return mapPet(data);
   },
 
   async getSpecies(): Promise<SpeciesOption[]> {
     const { data, error } = await supabase.from('species').select('id, name').order('name', { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data || [];
   },
 
   async getBreedsBySpecies(speciesId: string): Promise<BreedOption[]> {
     const { data, error } = await supabase.from('breeds').select('id, name, species_id').eq('species_id', speciesId).order('name', { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data || [];
   },
 
@@ -75,7 +76,7 @@ export const petsService = {
     };
 
     const { data, error } = await supabase.from('pets').insert(insert).select(PET_SELECT).single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapPet(data);
   },
 
@@ -95,7 +96,7 @@ export const petsService = {
     if (updates.isActive !== undefined) payload.is_active = updates.isActive;
 
     const { data, error } = await supabase.from('pets').update(payload).eq('id', id).select(PET_SELECT).single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapPet(data);
   },
 
@@ -105,7 +106,7 @@ export const petsService = {
 
   async getPetTimeline(id: string) {
     const { data, error } = await supabase.from('pet_timeline').select('*').eq('pet_id', id).order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data || [];
   }
 };

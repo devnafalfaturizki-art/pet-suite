@@ -19,6 +19,16 @@ export function usePortalPets(customerId?: string) {
   });
 }
 
+export function usePortalPet(customerId?: string, petId?: string) {
+  return useQuery(
+    ['portalPet', customerId, petId],
+    () => (customerId && petId ? portalService.getPetForCustomer(customerId, petId) : null),
+    {
+      enabled: Boolean(customerId && petId)
+    }
+  );
+}
+
 export function usePortalAppointments(customerId?: string) {
   return useQuery(['portalAppointments', customerId], () => (customerId ? portalService.getUpcomingAppointments(customerId) : []), {
     enabled: Boolean(customerId)

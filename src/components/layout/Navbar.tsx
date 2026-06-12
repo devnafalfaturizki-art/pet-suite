@@ -94,12 +94,12 @@ export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
   };
 
   return (
-    <div className="relative flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 lg:px-6">
+    <div data-navbar className="relative flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 lg:px-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={onToggleSidebar}>
+        <Button variant="outline" size="sm" onClick={onToggleSidebar} aria-label="Open navigation menu">
           <Menu className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={onOpenCommand}>
+        <Button variant="outline" size="sm" onClick={onOpenCommand} aria-label="Open command palette">
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline">Search</span>
         </Button>

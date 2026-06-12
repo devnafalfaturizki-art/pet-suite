@@ -4,6 +4,7 @@ import { CalendarDays, CheckCircle, Clock } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useCreateAppointment, useGetDoctorAvailability, useDoctors, useServices } from '../appointments.hooks';
+import { formatCurrency } from '@/lib/utils';
 import { useCustomers, useCustomerPets } from '@/features/customers/customers.hooks';
 
 export default function CreateAppointmentPage() {
@@ -153,9 +154,9 @@ export default function CreateAppointmentPage() {
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
             >
               <option value="">Select a service</option>
-              {services.map((s) => (
+                {services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} · {s.durationMinutes} min · ₱{s.price.toFixed(2)}
+                  {s.name} · {s.durationMinutes} min · {formatCurrency(s.price)}
                 </option>
               ))}
             </select>

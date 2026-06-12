@@ -36,8 +36,7 @@ export default function CreateMonitoringPage() {
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSave() {
     if (!validate()) return;
 
     const payload = {
@@ -61,7 +60,7 @@ export default function CreateMonitoringPage() {
   return (
     <div className="p-6 space-y-6">
       <PageHeader title="Create Monitoring Entry" description="Capture weight, medication, recovery notes, and owner uploads." />
-      <form onSubmit={onSubmit} className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">Pet ID</label>
@@ -111,7 +110,7 @@ export default function CreateMonitoringPage() {
         {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
 
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={saving}>
+          <Button type="button" onClick={handleSave} disabled={saving}>
             <Activity className="w-4 h-4 mr-2" />
             {saving ? 'Saving...' : 'Save Entry'}
           </Button>

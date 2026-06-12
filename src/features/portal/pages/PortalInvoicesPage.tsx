@@ -2,6 +2,7 @@ import { Card } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePortalInvoices, usePortalCustomerId } from '../portal.hooks';
+import { formatCurrency } from '@/lib/utils';
 
 export default function PortalInvoicesPage() {
   const user = useAuthStore((state) => state.user);
@@ -18,7 +19,7 @@ export default function PortalInvoicesPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm text-slate-500">Invoice ID: {invoice.id}</div>
-                  <h2 className="text-lg font-semibold">Total: ₱{invoice.total.toFixed(2)}</h2>
+                  <h2 className="text-lg font-semibold">Total: {formatCurrency(invoice.total)}</h2>
                 </div>
                 <div className="text-sm text-slate-600">{invoice.status}</div>
               </div>

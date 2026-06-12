@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 
 export interface AuthUserPayload {
   id: string;
@@ -26,7 +27,7 @@ export const authService = {
   async signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
   },
 
@@ -36,7 +37,7 @@ export const authService = {
     });
 
     if (error) {
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
   },
 
@@ -81,7 +82,7 @@ export const authService = {
       .single();
 
     if (error) {
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
 
     return {
@@ -111,7 +112,7 @@ export const authService = {
       .single();
 
     if (error) {
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
 
     return {

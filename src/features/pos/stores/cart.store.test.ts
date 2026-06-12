@@ -3,8 +3,19 @@ import useCartStore from './cart.store';
 
 const resetCart = () => {
   useCartStore.setState({
-    cart: { items: [], subtotal: 0, discountTotal: 0, loyaltyDiscount: 0, total: 0 },
-    paymentData: { method: 'cash', paidAmount: 0, changeAmount: 0, splitEnabled: false }
+    cart: {
+      items: [],
+      customerId: null,
+      customerName: null,
+      customerPhone: null,
+      loyaltyPointsAvailable: 0,
+      loyaltyPointsToRedeem: 0,
+      subtotal: 0,
+      discountTotal: 0,
+      loyaltyDiscount: 0,
+      total: 0
+    },
+    paymentData: { method: 'cash', paidAmount: 0, paidAmountSecondary: 0, changeAmount: 0, splitEnabled: false, reference: null }
   });
 };
 
@@ -86,5 +97,39 @@ describe('cart store', () => {
     const updatedState = useCartStore.getState();
 
     expect(updatedState.paymentData.changeAmount).toBe(10000);
+  });
+
+  it('supports split payments and computes total paid correctly', () => {
+    const store = useCartStore.getState();
+
+    store.addItem({
+      name: 'Grooming',
+      itemType: 'service',
+      referenceId: 'svc-2',
+      unitPrice: 100000,
+      quantity: 1,
+      discountAmount: 0
+    });
+
+    store.setPaymentMethod('card');
+    store.toggleSplitPayment(true);
+    store.setSecondaryMethod('cash');
+    store.setPaidAmount(50000);
+    store.setPaidAmountSecondary(60000);
+
+    const updatedState = useCartStore.getState();
+
+    expect(updatedState.paymentData.paidAmount + (updatedState.paymentData.paidAmountSecondary || 0)).toBe(110000);
+    expect(updatedState.paymentData.changeAmount).toBe(10000);
+  });
+
+  it('stores payment reference in payment data', () => {
+    const store = useCartStore.getState();
+
+    store.setPaidAmount(100000);
+    store.setSecondaryMethod('card');
+    useCartStore.setState({ paymentData: { ...store.paymentData, reference: 'REF-001' } });
+
+    expect(useCartStore.getState().paymentData.reference).toBe('REF-001');
   });
 });

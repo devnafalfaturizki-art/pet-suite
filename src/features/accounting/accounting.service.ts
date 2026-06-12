@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type {
   Account,
   Transaction,
@@ -38,19 +39,21 @@ function mapTransaction(record: any): Transaction {
 export const accountingService = {
   async getAccounts(): Promise<Account[]> {
     const { data, error } = await supabase.from('accounts').select('id, name, type, description, is_active, created_at').eq('is_active', true).order('name');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapAccount);
   },
 
   async createAccount(payload: { name: string; type: Account['type']; description?: string }): Promise<Account> {
     const { data, error } = await supabase.from('accounts').insert({ name: payload.name, type: payload.type, description: payload.description }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create account');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create account');
     return mapAccount(data);
   },
 
   async updateAccount(id: string, payload: Partial<{ name: string; type: Account['type']; description?: string; isActive?: boolean }>): Promise<Account> {
     const { data, error } = await supabase.from('accounts').update(payload).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update account');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update account');
     return mapAccount(data);
   },
 
@@ -70,7 +73,7 @@ export const accountingService = {
     if (params.search) query = query.ilike('description', `%${params.search}%`).or(`reference.ilike.%${params.search}%`);
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     const items = Array.isArray(res.data) ? res.data.map(mapTransaction) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
   },
@@ -85,13 +88,14 @@ export const accountingService = {
       reference: payload.reference,
       transaction_date: payload.transactionDate || new Date().toISOString().slice(0, 10)
     }).select('*, accounts(name)').single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create transaction');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create transaction');
     return mapTransaction(data);
   },
 
   async getIncomeByPeriod(from: string, to: string): Promise<PeriodSum[]> {
     const { data, error } = await supabase.from('transactions').select('transaction_date, amount').gte('transaction_date', from).lte('transaction_date', to).eq('type', 'credit');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const grouped: Record<string, number> = {};
     (data || []).forEach((r: any) => { const d = r.transaction_date; grouped[d] = (grouped[d] || 0) + Number(r.amount); });
     return Object.entries(grouped).map(([period, amount]) => ({ period, amount }));
@@ -99,7 +103,7 @@ export const accountingService = {
 
   async getExpenseByPeriod(from: string, to: string): Promise<PeriodSum[]> {
     const { data, error } = await supabase.from('transactions').select('transaction_date, amount').gte('transaction_date', from).lte('transaction_date', to).eq('type', 'debit');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const grouped: Record<string, number> = {};
     (data || []).forEach((r: any) => { const d = r.transaction_date; grouped[d] = (grouped[d] || 0) + Number(r.amount); });
     return Object.entries(grouped).map(([period, amount]) => ({ period, amount }));
@@ -110,15 +114,15 @@ export const accountingService = {
     const end = new Date(year, month, 0).toISOString().slice(0, 10);
 
     const { data: incomeData, error: incErr } = await supabase.from('transactions').select('amount, account_id').gte('transaction_date', start).lte('transaction_date', end).eq('type', 'credit');
-    if (incErr) throw new Error(incErr.message);
+    if (incErr) handleSupabaseError(incErr);
     const income = (incomeData || []).reduce((s: number, r: any) => s + Number(r.amount), 0);
 
     const { data: expenseData, error: expErr } = await supabase.from('transactions').select('amount, account_id').gte('transaction_date', start).lte('transaction_date', end).eq('type', 'debit');
-    if (expErr) throw new Error(expErr.message);
+    if (expErr) handleSupabaseError(expErr);
     const expenses = (expenseData || []).reduce((s: number, r: any) => s + Number(r.amount), 0);
 
     const { data: breakdownData, error: brErr } = await supabase.from('transactions').select('account_id, type, sum(amount) as amount').gte('transaction_date', start).lte('transaction_date', end).group('account_id, type');
-    if (brErr) throw new Error(brErr.message);
+    if (brErr) handleSupabaseError(brErr);
 
     const breakdown: Array<{ accountName: string; type: 'debit' | 'credit'; amount: number }> = [];
     if (Array.isArray(breakdownData)) {
@@ -137,10 +141,10 @@ export const accountingService = {
       const start = new Date(year, m, 1).toISOString().slice(0, 10);
       const end = new Date(year, m + 1, 0).toISOString().slice(0, 10);
       const { data: inc, error: incErr } = await supabase.from('transactions').select('amount').gte('transaction_date', start).lte('transaction_date', end).eq('type', 'credit');
-      if (incErr) throw new Error(incErr.message);
+      if (incErr) handleSupabaseError(incErr);
       const income = (inc || []).reduce((s: number, r: any) => s + Number(r.amount), 0);
       const { data: exp, error: expErr } = await supabase.from('transactions').select('amount').gte('transaction_date', start).lte('transaction_date', end).eq('type', 'debit');
-      if (expErr) throw new Error(expErr.message);
+      if (expErr) handleSupabaseError(expErr);
       const expenses = (exp || []).reduce((s: number, r: any) => s + Number(r.amount), 0);
       result.push({ month: m + 1, income, expenses, net: income - expenses });
     }

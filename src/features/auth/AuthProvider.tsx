@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
 import { authService } from './auth.service';
@@ -20,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error(error.message);
+        toast.error((error as Error)?.message ?? String(error));
       }
 
       if (session?.user) {
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(user);
           setSession(session);
         } catch (error) {
-          console.error(error);
+          toast.error((error as Error)?.message ?? String(error));
         }
       }
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null);
         }
       } catch (err) {
-        console.error(err);
+        toast.error((err as Error)?.message ?? String(err));
       }
     });
 

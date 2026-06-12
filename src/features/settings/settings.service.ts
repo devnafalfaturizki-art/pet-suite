@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type {
   ClinicProfile,
   BusinessHoursSettings,
@@ -29,7 +30,7 @@ export const settingsService = {
   async upsertSetting(key: string, value: unknown) {
     const { error } = await supabase.from('settings').upsert({ key, value }).select();
     if (error) {
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
     return true;
   },
@@ -102,17 +103,13 @@ export const settingsService = {
 
   async getModules(): Promise<ModuleRecord[]> {
     const { data, error } = await supabase.from('modules').select('*').order('key');
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) handleSupabaseError(error);
     return (data || []) as ModuleRecord[];
   },
 
   async toggleModule(key: string, isEnabled: boolean) {
     const { error } = await supabase.from('modules').update({ is_enabled: isEnabled }).eq('key', key).select();
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) handleSupabaseError(error);
     return true;
   },
 
@@ -156,9 +153,7 @@ export const settingsService = {
     if (filters.toDate) query = query.lte('created_at', filters.toDate);
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1);
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) handleSupabaseError(error);
 
     return { items: (data || []) as any[], total: typeof count === 'number' ? count : (data || []).length };
   }

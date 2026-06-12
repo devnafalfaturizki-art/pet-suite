@@ -29,7 +29,7 @@ function bufferFromDoc(doc: PDFKit.PDFDocument): Promise<Uint8Array> {
 
 function formatCurrency(value: number | string | null | undefined) {
   const amount = Number(value ?? 0);
-  return `₱${amount.toFixed(2)}`;
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(amount);
 }
 
 async function fetchClinicProfile() {

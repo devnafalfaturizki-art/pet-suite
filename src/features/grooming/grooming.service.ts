@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { GroomingService, GroomingRecord, GroomingQueryParams, GroomingServicePayload, GroomingRecordPayload } from './grooming.types';
 
 function mapService(record: any): GroomingService {
@@ -32,7 +33,7 @@ function mapRecord(record: any): GroomingRecord {
 export const groomingService = {
   async getServices(): Promise<GroomingService[]> {
     const { data, error } = await supabase.from('grooming_services').select('id, name, description, price, duration_minutes, is_active, created_at').order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapService);
   },
 
@@ -45,7 +46,7 @@ export const groomingService = {
       query = query.or(`pet_id.ilike.${term},notes.ilike.${term}`);
     }
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     const items = Array.isArray(res.data) ? res.data.map(mapRecord) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
   },
@@ -57,7 +58,8 @@ export const groomingService = {
       price: payload.price,
       duration_minutes: payload.durationMinutes
     }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create grooming service');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create grooming service');
     return mapService(data);
   },
 
@@ -70,7 +72,8 @@ export const groomingService = {
       status: 'scheduled',
       notes: payload.notes
     }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create grooming record');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create grooming record');
     return mapRecord(data);
   }
 };

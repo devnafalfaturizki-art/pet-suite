@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button, Card, Input, Select, Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui';
@@ -66,7 +67,7 @@ export default function AccountingPage() {
       await fetch('/api/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'profit-loss', month: plMonth, year: plYear }) });
       // note: adapt to your Edge Functions / server route
     } catch (e) {
-      console.error(e);
+      toast.error('Failed to export PDF. Please try again.');
     }
   }
 

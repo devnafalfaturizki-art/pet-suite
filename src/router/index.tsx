@@ -12,6 +12,7 @@ import PortalOverviewPage from '@/features/portal/pages/PortalOverviewPage';
 import PortalPetsPage from '@/features/portal/pages/PortalPetsPage';
 import PortalAppointmentsPage from '@/features/portal/pages/PortalAppointmentsPage';
 import PortalInvoicesPage from '@/features/portal/pages/PortalInvoicesPage';
+import PortalPetDetailPage from '@/features/portal/pages/PortalPetDetailPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { protectedRoutes, renderProtectedRoute } from '@/router/route-config';
@@ -32,6 +33,7 @@ export function AppRoutes() {
       <Route element={<AuthGuard><PortalLayout /></AuthGuard>}>
         <Route path="portal" element={<CustomerRoute><PortalOverviewPage /></CustomerRoute>} />
         <Route path="portal/pets" element={<CustomerRoute><PortalPetsPage /></CustomerRoute>} />
+        <Route path="portal/pets/:id" element={<CustomerRoute><PortalPetDetailPage /></CustomerRoute>} />
         <Route path="portal/appointments" element={<CustomerRoute><PortalAppointmentsPage /></CustomerRoute>} />
         <Route path="portal/invoices" element={<CustomerRoute><PortalInvoicesPage /></CustomerRoute>} />
       </Route>

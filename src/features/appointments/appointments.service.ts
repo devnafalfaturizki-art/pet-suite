@@ -85,7 +85,7 @@ export const appointmentsService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+      if (res.error) handleSupabaseError(res.error);
 
     const items = Array.isArray(res.data) ? res.data.map(mapAppointment) : [];
     return {
@@ -100,7 +100,7 @@ export const appointmentsService = {
       .select('id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at')
       .eq('id', id)
       .single();
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return data ? mapAppointment(data) : null;
   },
 
@@ -119,13 +119,13 @@ export const appointmentsService = {
       status: 'scheduled'
     };
     const { data, error } = await supabase.from('appointments').insert(insert).select().single();
-    if (error || !data) throw new Error(error?.message ?? 'Unable to create appointment');
+      if (error || !data) handleSupabaseError(error);
     return mapAppointment(data);
   },
 
   async updateAppointmentStatus(id: string, status: string) {
     const { data, error } = await supabase.from('appointments').update({ status }).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update appointment status');
+      if (error || !data) handleSupabaseError(error);
 
     if (status === 'completed') {
       const reservation = await supabase.from('invoices').select('id').eq('appointment_id', id).limit(1);
@@ -159,7 +159,7 @@ export const appointmentsService = {
       .lte('appointment_date', to)
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true });
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map(mapAppointment) : [];
   },
 
@@ -169,7 +169,7 @@ export const appointmentsService = {
       .select('id, profile_id, specialization, photo_url, profiles(full_name)')
       .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
 
     const doctors = Array.isArray(data) ? data : [];
     const normalized = search?.trim().toLowerCase() || '';
@@ -216,7 +216,7 @@ export const appointmentsService = {
       .eq('day_of_week', dayOfWeek)
       .eq('is_available', true);
 
-    if (scheduleError) throw new Error(scheduleError.message);
+      if (scheduleError) handleSupabaseError(scheduleError);
 
     const { data: booked, error: bookedError } = await supabase
       .from('appointments')
@@ -225,7 +225,7 @@ export const appointmentsService = {
       .eq('appointment_date', dateString)
       .neq('status', 'cancelled');
 
-    if (bookedError) throw new Error(bookedError.message);
+      if (bookedError) handleSupabaseError(bookedError);
 
     const bookedSlots = new Set((booked || []).map((b: any) => b.start_time));
 
@@ -244,7 +244,7 @@ export const appointmentsService = {
   },
   async searchServiceIds(search: string): Promise<string[]> {
     const { data, error } = await supabase.from('services').select('id').ilike('name', `%${search}%`).limit(50);
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map((row: any) => row.id) : [];
   },
 
@@ -252,7 +252,7 @@ export const appointmentsService = {
     let query: any = supabase.from('services').select('id, name, duration_minutes, price').order('name');
     if (search) query = query.ilike('name', `%${search}%`);
     const { data, error } = await query;
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return Array.isArray(data)
       ? data.map((row: any) => ({ id: row.id, name: row.name, durationMinutes: row.duration_minutes, price: Number(row.price) }))
       : [];

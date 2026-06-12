@@ -15,6 +15,7 @@ export interface Cart {
   items: CartItem[];
   customerId?: string | null;
   customerName?: string | null;
+  customerPhone?: string | null;
   loyaltyPointsAvailable?: number;
   loyaltyPointsToRedeem?: number;
   subtotal: number;

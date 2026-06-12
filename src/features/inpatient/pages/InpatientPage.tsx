@@ -27,8 +27,7 @@ export default function InpatientPage() {
   const occupied = items.filter((item) => item.status === 'admitted').length;
   const discharged = items.filter((item) => item.status === 'discharged').length;
 
-  async function handleCreate(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleAdmit() {
     await createRecord.mutateAsync({
       petId,
       cageId: cageId || cages[0]?.id,
@@ -146,7 +145,7 @@ export default function InpatientPage() {
                 <p className="text-sm text-slate-500">Assign a cage and admit a patient for inpatient care.</p>
               </div>
             </div>
-            <form onSubmit={handleCreate} className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">Pet ID</label>
                 <Input value={petId} onChange={(event) => setPetId(event.target.value)} />
@@ -176,10 +175,10 @@ export default function InpatientPage() {
                 <label className="block text-sm font-medium text-slate-700">Notes</label>
                 <textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm" rows={4} />
               </div>
-              <Button type="submit" disabled={createRecord.isLoading}>
+              <Button type="button" onClick={handleAdmit} disabled={createRecord.isLoading}>
                 <Save className="w-4 h-4 mr-2" /> Admit pet
               </Button>
-            </form>
+            </div>
           </Card>
         </div>
         {reviewInvoiceFor && <InvoiceReviewModal inpatientId={reviewInvoiceFor} onClose={() => setReviewInvoiceFor(null)} />}

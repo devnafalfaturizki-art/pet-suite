@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { FinancialReport, MonthlyPoint } from './reports.types';
 
 function monthKey(dateStr: string) {
@@ -13,11 +14,11 @@ export const reportsService = {
 
     // gather invoices in range
     const { data: invoices = [], error: invErr } = await supabase.from('invoices').select('id, total, created_at').gte('created_at', from).lte('created_at', to);
-    if (invErr) throw new Error(invErr.message);
+    if (invErr) handleSupabaseError(invErr);
 
     // gather transactions (expenses) in range
     const { data: txs = [], error: txErr } = await supabase.from('transactions').select('id, amount, type, created_at').gte('created_at', from).lte('created_at', to);
-    if (txErr) throw new Error(txErr.message);
+    if (txErr) handleSupabaseError(txErr);
 
     const totalRevenue = (invoices || []).reduce((s: number, inv: any) => s + Number(inv.total || 0), 0);
     const totalExpense = (txs || []).reduce((s: number, t: any) => s + (t.type === 'debit' ? Number(t.amount || 0) : 0), 0);
@@ -53,12 +54,12 @@ export const reportsService = {
     const t = to || new Date().toISOString();
 
     const { data: records = [], error: recErr } = await supabase.from('medical_records').select('pet_id, assessment, record_type, created_at').gte('created_at', f).lte('created_at', t);
-    if (recErr) throw new Error(recErr.message);
+    if (recErr) handleSupabaseError(recErr);
 
     const totalPatients = new Set((records || []).map((r: any) => r.pet_id)).size;
 
     const { data: appts = [], error: apptErr } = await supabase.from('appointments').select('customer_id, created_at').gte('created_at', f).lte('created_at', t);
-    if (apptErr) throw new Error(apptErr.message);
+    if (apptErr) handleSupabaseError(apptErr);
     const newPatients = new Set((appts || []).map((a: any) => a.customer_id)).size;
 
     const diagCount: Record<string, number> = {};
@@ -75,7 +76,7 @@ export const reportsService = {
     const f = from || '1970-01-01';
     const t = to || new Date().toISOString();
     const { data: appts = [], error: err } = await supabase.from('appointments').select('id, doctor_id, pet_id, service_id, created_at').gte('created_at', f).lte('created_at', t);
-    if (err) throw new Error(err.message);
+    if (err) handleSupabaseError(err);
 
     const byDoctor: Record<string, { patients: Set<string>; services: number; appointments: number; revenue: number }> = {};
     for (const a of (appts || [])) {
@@ -134,7 +135,7 @@ export const reportsService = {
     const f = from || '1970-01-01';
     const t = to || new Date().toISOString();
     const { data: items = [], error } = await supabase.from('invoice_items').select('reference_id, name, quantity, total, created_at').gte('created_at', f).lte('created_at', t).eq('item_type', 'product');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const map: Record<string, { name: string; qty: number; revenue: number }> = {};
     for (const it of (items || [])) {
       const key = it.reference_id || it.name;
@@ -151,7 +152,7 @@ export const reportsService = {
     const f = from || '1970-01-01';
     const t = to || new Date().toISOString();
     const { data: items = [], error } = await supabase.from('invoice_items').select('reference_id, name, total').gte('created_at', f).lte('created_at', t).eq('item_type', 'service');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const map: Record<string, number> = {};
     const names: Record<string, string> = {};
     for (const it of (items || [])) {

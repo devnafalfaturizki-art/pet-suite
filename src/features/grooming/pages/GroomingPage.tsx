@@ -27,8 +27,7 @@ export default function GroomingPage() {
   const total = data?.total ?? 0;
   const activeServices = services.filter((item) => item.isActive).length;
 
-  async function handleCreateService(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleCreateService() {
     await createService.mutateAsync({
       name: serviceName,
       price: Number(servicePrice),
@@ -39,8 +38,7 @@ export default function GroomingPage() {
     setServiceDuration('30');
   }
 
-  async function handleCreateRecord(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleCreateRecord() {
     await createRecord.mutateAsync({
       petId: recordPetId,
       serviceId: recordServiceId,
@@ -136,7 +134,7 @@ export default function GroomingPage() {
         <div className="space-y-6">
           <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">New grooming service</h2>
-            <form onSubmit={handleCreateService} className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">Service name</label>
                 <Input value={serviceName} onChange={(event) => setServiceName(event.target.value)} />
@@ -149,15 +147,15 @@ export default function GroomingPage() {
                 <label className="block text-sm font-medium text-slate-700">Duration (minutes)</label>
                 <Input type="number" value={serviceDuration} onChange={(event) => setServiceDuration(event.target.value)} />
               </div>
-              <Button type="submit" disabled={createService.isLoading}>
+              <Button type="button" onClick={handleCreateService} disabled={createService.isLoading}>
                 <Plus className="w-4 h-4 mr-2" /> Add service
               </Button>
-            </form>
+            </div>
           </Card>
 
           <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Schedule grooming</h2>
-            <form onSubmit={handleCreateRecord} className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">Pet ID</label>
                 <Input value={recordPetId} onChange={(event) => setRecordPetId(event.target.value)} />
@@ -183,10 +181,10 @@ export default function GroomingPage() {
                 <label className="block text-sm font-medium text-slate-700">Notes</label>
                 <textarea value={recordNotes} onChange={(event) => setRecordNotes(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm" rows={3} />
               </div>
-              <Button type="submit" disabled={createRecord.isLoading}>
+              <Button type="button" onClick={handleCreateRecord} disabled={createRecord.isLoading}>
                 <Plus className="w-4 h-4 mr-2" /> Schedule
               </Button>
-            </form>
+            </div>
           </Card>
         </div>
       </div>

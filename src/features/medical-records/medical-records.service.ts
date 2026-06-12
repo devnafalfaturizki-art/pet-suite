@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type {
   MedicalRecord,
   MedicalRecordCreatePayload,
@@ -85,7 +86,7 @@ export const medicalRecordsService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
 
     return {
       items: Array.isArray(res.data) ? res.data.map(mapSummaryRecord) : [],
@@ -100,7 +101,7 @@ export const medicalRecordsService = {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data ? mapMedicalRecord(data) : null;
   },
 
@@ -123,7 +124,8 @@ export const medicalRecordsService = {
       .select()
       .single();
 
-    if (error || !record) throw new Error(error?.message || 'Unable to create medical record');
+    if (error) handleSupabaseError(error);
+    if (!record) throw new Error('Unable to create medical record');
 
     if (appointmentId) {
       await supabase.from('appointments').update({ status: 'completed' }).eq('id', appointmentId);
@@ -163,7 +165,7 @@ export const medicalRecordsService = {
     }
 
     const { data, error } = await supabase.from('medical_records').update(transformed).eq('id', id).select().single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data ? mapMedicalRecord(data) : null;
   },
 
@@ -173,13 +175,13 @@ export const medicalRecordsService = {
       .insert({ medical_record_id: recordId, ...prescription })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapPrescription(data);
   },
 
   async removePrescription(id: string) {
     const { error } = await supabase.from('prescriptions').delete().eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
@@ -191,7 +193,7 @@ export const medicalRecordsService = {
     if (file instanceof File) {
       const path = `${recordId}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from('medical-attachments').upload(path, file, { cacheControl: '3600', upsert: true });
-      if (uploadError) throw new Error(uploadError.message);
+      if (uploadError) handleSupabaseError(uploadError);
       fileUrl = path;
       fileName = file.name;
       fileType = file.type || 'application/octet-stream';
@@ -206,7 +208,7 @@ export const medicalRecordsService = {
       .insert({ medical_record_id: recordId, file_url: fileUrl, file_name: fileName, file_type: fileType })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapAttachment({
       id: data.id,
       filename: data.file_name,
@@ -217,7 +219,7 @@ export const medicalRecordsService = {
 
   async removeAttachment(id: string) {
     const { error } = await supabase.from('medical_attachments').delete().eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
@@ -230,7 +232,7 @@ export const medicalRecordsService = {
       duration_days: Number(prescription.duration) || 0
     }));
     const { error } = await supabase.from('prescriptions').insert(rows);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
@@ -242,7 +244,7 @@ export const medicalRecordsService = {
       file_type: 'application/octet-stream'
     }));
     const { error } = await supabase.from('medical_attachments').insert(rows);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   }
 };

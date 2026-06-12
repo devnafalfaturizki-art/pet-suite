@@ -1,4 +1,6 @@
 import React, { lazy, Suspense } from 'react';
+import PageSkeleton from '@/components/common/PageSkeleton';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import type { ReactNode } from 'react';
 import type { ModuleKey, UserRole } from '@/types';
 import { ModuleGuard } from '@/features/auth/ModuleGuard';
@@ -185,7 +187,7 @@ export const protectedRoutes: ProtectedRouteDefinition[] = [
 ];
 
 export function renderProtectedRoute(route: ProtectedRouteDefinition) {
-  const suspended = <Suspense fallback={<div />}>{route.element}</Suspense>;
+  const suspended = <ErrorBoundary><Suspense fallback={<PageSkeleton />}>{route.element}</Suspense></ErrorBoundary>;
   const element = route.moduleKey ? <ModuleGuard moduleKey={route.moduleKey}>{suspended}</ModuleGuard> : suspended;
   return route.roles ? <RoleGuard allowedRoles={route.roles}>{element}</RoleGuard> : element;
 }

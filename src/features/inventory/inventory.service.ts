@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type {
   InventoryCategory,
   Supplier,
@@ -92,13 +93,13 @@ function mapInventoryValue(record: any): InventoryValue {
 export const inventoryService = {
   async getCategories(): Promise<InventoryCategory[]> {
     const { data, error } = await supabase.from('inventory_categories').select('id, name, created_at');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapCategory);
   },
 
   async getSuppliers(): Promise<Supplier[]> {
     const { data, error } = await supabase.from('suppliers').select('id, name, contact, address, notes, created_at');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapSupplier);
   },
 
@@ -120,7 +121,7 @@ export const inventoryService = {
 
     if (params.lowStock) {
       const res = await query;
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) handleSupabaseError(res.error);
 
       const lowStockItems: InventoryItem[] = Array.isArray(res.data)
         ? (res.data as any[]).map(mapItem).filter((item: InventoryItem) => item.currentStock <= item.minStock)
@@ -133,7 +134,7 @@ export const inventoryService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
 
     const items: InventoryItem[] = Array.isArray(res.data)
       ? res.data.map(mapItem)
@@ -149,7 +150,7 @@ export const inventoryService = {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const itemRecord = data as any;
     return itemRecord ? mapItem({ ...itemRecord, category_name: itemRecord.inventory_categories?.name }) : null;
   },
@@ -169,7 +170,8 @@ export const inventoryService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to create inventory item');
+      if (error) handleSupabaseError(error);
+      if (!data) throw new Error('Unable to create inventory item');
     return mapItem(data);
   },
 
@@ -185,7 +187,8 @@ export const inventoryService = {
     };
 
     const { data, error } = await supabase.from('inventory_items').update(transformed).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update inventory item');
+      if (error) handleSupabaseError(error);
+      if (!data) throw new Error('Unable to update inventory item');
     return mapItem(data);
   },
 
@@ -196,7 +199,7 @@ export const inventoryService = {
       .eq('item_id', itemId)
       .order('expiry_date', { ascending: true });
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map(mapBatch) : [];
   },
 
@@ -208,7 +211,7 @@ export const inventoryService = {
       .order('received_at', { ascending: false })
       .range(offset, offset + pageSize - 1);
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const items: InventoryBatch[] = Array.isArray(data) ? data.map(mapBatch) : [];
     return { items, total: typeof count === 'number' ? count : items.length };
   },
@@ -227,7 +230,8 @@ export const inventoryService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to add batch');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to add batch');
     await this.recordStockMovement(payload.itemId, payload.quantity, 'inbound', 'batch', data.id, `Batch ${payload.batchNumber}`);
     return mapBatch(data);
   },
@@ -250,7 +254,7 @@ export const inventoryService = {
     if (params.endDate) query = query.lte('created_at', params.endDate);
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+      if (res.error) handleSupabaseError(res.error);
 
     const items: StockMovement[] = Array.isArray(res.data) ? res.data.map(mapStockMovement) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
@@ -272,7 +276,7 @@ export const inventoryService = {
       reference_id: referenceId,
       notes
     });
-    if (movementError) throw new Error(movementError.message);
+    if (movementError) handleSupabaseError(movementError);
 
     const { data: currentStockData, error: selectError } = await supabase
       .from('inventory_items')
@@ -280,9 +284,8 @@ export const inventoryService = {
       .eq('id', itemId)
       .single();
 
-    if (selectError || currentStockData === null) {
-      throw new Error(selectError?.message || 'Unable to load current stock');
-    }
+    if (selectError) handleSupabaseError(selectError);
+    if (currentStockData === null) throw new Error('Unable to load current stock');
 
     const newStock = Number((currentStockData as any).current_stock) + quantity;
     const { error: updateError } = await supabase
@@ -290,7 +293,7 @@ export const inventoryService = {
       .update({ current_stock: newStock })
       .eq('id', itemId);
 
-    if (updateError) throw new Error(updateError.message);
+    if (updateError) handleSupabaseError(updateError);
   },
 
   async adjustStock(itemId: string, quantity: number, reason: string): Promise<boolean> {
@@ -309,7 +312,7 @@ export const inventoryService = {
       .lte('expiry_date', dateString)
       .order('expiry_date', { ascending: true });
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map(mapBatch) : [];
   },
 
@@ -318,7 +321,7 @@ export const inventoryService = {
       .from('inventory_items')
       .select('id, name, category_id, unit, min_stock, current_stock, price_per_unit, is_active, created_at, updated_at, inventory_categories(name as category_name)');
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
 
     const lowStockItems = Array.isArray(data)
       ? data.map(mapItem).filter((item) => item.currentStock <= item.minStock)
@@ -327,9 +330,10 @@ export const inventoryService = {
     return lowStockItems.sort((a, b) => a.currentStock - b.currentStock);
   },
 
-  async getInventoryValue(): Promise<InventoryValue[]> {
+      if (error) handleSupabaseError(error);
+      if (!data) throw new Error('Unable to add batch');
     const { data, error } = await supabase.rpc('inventory_value_by_category');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map(mapInventoryValue) : [];
   }
 };

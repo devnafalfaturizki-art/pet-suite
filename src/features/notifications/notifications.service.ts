@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { NotificationLog, NotificationTemplate, WhatsAppConfig, EmailConfig } from './notifications.types';
 
 export const notificationsService = {
@@ -8,13 +9,14 @@ export const notificationsService = {
     if (channel) query = query.eq('channel', channel);
     if (search) query = query.or(`recipient.ilike.%${search}%,template_key.ilike.%${search}%`);
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     return { items: (res.data || []) as NotificationLog[], total: typeof res.count === 'number' ? res.count : (res.data || []).length };
   },
 
   async retryNotification(id: string) {
     const { data, error } = await supabase.from('notifications_log').select('*').eq('id', id).single();
-    if (error || !data) throw new Error(error?.message || 'Notification not found');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Notification not found');
 
     await supabase.from('notifications_log').update({ status: 'pending', error_message: null }).eq('id', id);
 
@@ -34,14 +36,15 @@ export const notificationsService = {
 
   async getTemplates(): Promise<NotificationTemplate[]> {
     const { data, error } = await supabase.from('settings').select('value').eq('key', 'notification_templates').single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     const templates = data?.value ?? [];
     return Array.isArray(templates) ? templates : [];
   },
 
   async updateTemplate(id: string, updates: Partial<NotificationTemplate>) {
     const { data, error } = await supabase.from('settings').select('value').eq('key', 'notification_templates').single();
-    if (error || !data) throw new Error(error?.message || 'Unable to load templates');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to load templates');
     const templates = Array.isArray(data.value) ? data.value : [];
     const found = templates.some((template: any) => template.id === id);
     if (!found) throw new Error('Template not found');
@@ -49,7 +52,7 @@ export const notificationsService = {
       template.id === id ? { ...template, ...updates, updatedAt: new Date().toISOString() } : template
     );
     const { error: updateError } = await supabase.from('settings').update({ value: updatedTemplates }).eq('key', 'notification_templates');
-    if (updateError) throw new Error(updateError.message);
+    if (updateError) handleSupabaseError(updateError);
     return updatedTemplates.find((template: any) => template.id === id) as NotificationTemplate;
   },
 
@@ -61,14 +64,15 @@ export const notificationsService = {
 
   async saveWhatsAppConfig(cfg: WhatsAppConfig) {
     const { error } = await supabase.from('settings').upsert({ key: 'whatsapp_config', value: cfg }).select();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
   async testWhatsApp(cfg: WhatsAppConfig, testNumber: string) {
     // write a pending log and try to invoke function
     const { data, error } = await supabase.from('notifications_log').insert({ channel: 'whatsapp', recipient: testNumber, template_key: null, payload: cfg, status: 'pending' }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create test log');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create test log');
     try {
       await supabase.functions.invoke('send-whatsapp', { body: { logId: data.id } as any } as any);
       return true;
@@ -85,13 +89,14 @@ export const notificationsService = {
 
   async saveEmailConfig(cfg: EmailConfig) {
     const { error } = await supabase.from('settings').upsert({ key: 'smtp_config', value: cfg }).select();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
   async testEmail(cfg: EmailConfig, testEmail: string) {
     const { data, error } = await supabase.from('notifications_log').insert({ channel: 'email', recipient: testEmail, template_key: null, payload: cfg, status: 'pending' }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create test log');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create test log');
     try {
       await supabase.functions.invoke('send-email', { body: { logId: data.id } as any } as any);
       return true;
@@ -130,7 +135,7 @@ export const notificationsService = {
     if (!rows.length) return 0;
 
     const { data: inserted, error: insertErr } = await supabase.from('notifications_log').insert(rows).select();
-    if (insertErr) throw new Error(insertErr.message);
+    if (insertErr) handleSupabaseError(insertErr);
 
     const chunk = (arr: any[], size = 10) => {
       const out: any[][] = [];

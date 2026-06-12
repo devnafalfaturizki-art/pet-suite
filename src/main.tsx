@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { Toaster } from '@/components/ui/toaster';
 import './index.css';
+import './styles/print.css';
 
 const queryClient = new QueryClient();
 

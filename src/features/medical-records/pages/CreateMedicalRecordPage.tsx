@@ -63,8 +63,7 @@ export default function CreateMedicalRecordPage() {
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSave() {
     if (!validate()) return;
 
     const filteredPrescriptions = prescriptions.filter((prescription) => prescription.medication.trim());
@@ -96,7 +95,7 @@ export default function CreateMedicalRecordPage() {
         description="Capture SOAP notes, prescriptions, and supporting attachments for a pet visit."
       />
 
-      <form onSubmit={onSubmit} className="space-y-6 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+      <div className="space-y-6 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">Pet ID</label>
@@ -257,7 +256,7 @@ export default function CreateMedicalRecordPage() {
         {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>
+          <Button type="button" onClick={handleSave} disabled={isSaving}>
             <Upload className="w-4 h-4 mr-2" />
             {isSaving ? 'Saving...' : 'Save Record'}
           </Button>

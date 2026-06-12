@@ -35,6 +35,7 @@ export function Sidebar({ activePath, onNavigate, isMobileOpen = false, onClose,
 
   return (
     <aside
+      data-sidebar
       className={cn(
         'fixed inset-y-0 left-0 z-40 overflow-y-auto border-r border-slate-200 bg-slate-50 p-5 shadow-xl transition duration-300 dark:border-slate-800 dark:bg-slate-950 lg:static lg:translate-x-0 lg:shadow-none',
         widthClasses,
@@ -69,6 +70,7 @@ export function Sidebar({ activePath, onNavigate, isMobileOpen = false, onClose,
                       onClose?.();
                     }}
                     title={item.label}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <Icon className="h-4 w-4" />
                     {!isCollapsed && <span>{item.label}</span>}

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type {
   Product,
   ProductVariant,
@@ -72,13 +73,13 @@ function mapProduct(record: any): Product {
 export const petshopService = {
   async getProductCategories(): Promise<ProductCategory[]> {
     const { data, error } = await supabase.from('product_categories').select('id, name, slug, created_at').order('name');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapCategory);
   },
 
   async getBrands(): Promise<Brand[]> {
     const { data, error } = await supabase.from('brands').select('id, name, created_at').order('name');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapBrand);
   },
 
@@ -96,7 +97,7 @@ export const petshopService = {
     if (params.brandId) query = query.eq('brand_id', params.brandId);
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     const items = Array.isArray(res.data) ? res.data.map(mapProduct) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
   },
@@ -112,7 +113,8 @@ export const petshopService = {
       barcode: payload.barcode,
       base_price: payload.basePrice
     }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create product');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create product');
     const product = mapProduct({ ...data, variants: [] });
 
     // insert variants
@@ -127,7 +129,7 @@ export const petshopService = {
         stock: v.stock
       }));
       const { data: variantData, error: variantError } = await supabase.from('product_variants').insert(rows).select();
-      if (variantError) throw new Error(variantError.message);
+      if (variantError) handleSupabaseError(variantError);
       product.variants = Array.isArray(variantData) ? variantData.map(mapVariant) : [];
     }
 
@@ -137,9 +139,10 @@ export const petshopService = {
         if (img instanceof File) {
           const path = `products/${product.id}/${Date.now()}-${img.name}`;
           const { error: uploadError } = await supabase.storage.from('petshop-images').upload(path, img, { cacheControl: '3600', upsert: true });
-          if (uploadError) throw new Error(uploadError.message);
+          if (uploadError) handleSupabaseError(uploadError);
           const { data: urlData, error: urlError } = await supabase.storage.from('petshop-images').createSignedUrl(path, 60 * 60);
-          if (urlError || !urlData?.signedURL) throw new Error(urlError?.message || 'Unable to generate image url');
+          if (urlError) handleSupabaseError(urlError);
+          if (!urlData?.signedURL) throw new Error('Unable to generate image url');
           const { data: imgRow } = await supabase.from('product_images').insert({ product_id: product.id, url: urlData.signedURL }).select().single();
           product.images = product.images ?? [];
           product.images.push({ id: imgRow.id, productId: imgRow.product_id, url: imgRow.url, isPrimary: imgRow.is_primary, sortOrder: imgRow.sort_order, createdAt: imgRow.created_at });
@@ -164,7 +167,8 @@ export const petshopService = {
       price: payload.price,
       stock: payload.stock
     }).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to create product variant');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create product variant');
     return mapVariant(data);
   }
 ,
@@ -175,7 +179,7 @@ export const petshopService = {
       .select('id, name, slug, description, category_id, brand_id, sku, barcode, base_price, is_active, created_at, updated_at, variants(*), product_images(*)')
       .eq('id', id)
       .single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data ? mapProduct(data) : null;
   },
 
@@ -193,7 +197,8 @@ export const petshopService = {
     };
 
     const { data, error } = await supabase.from('products').update(transformed).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update product');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update product');
     const product = mapProduct({ ...data, variants: [] });
 
     if (Array.isArray(payload.variants)) {
@@ -208,7 +213,7 @@ export const petshopService = {
             ...(v.price !== undefined ? { price: v.price } : {}),
             ...(v.stock !== undefined ? { stock: v.stock } : {})
           }).eq('id', vid);
-          if (uErr) throw new Error(uErr.message);
+          if (uErr) handleSupabaseError(uErr);
         } else {
           const { data: newVar, error: varErr } = await supabase.from('product_variants').insert({
             product_id: id,
@@ -219,7 +224,7 @@ export const petshopService = {
             price: (v as any).price || 0,
             stock: (v as any).stock || 0
           }).select().single();
-          if (varErr) throw new Error(varErr.message);
+          if (varErr) handleSupabaseError(varErr);
         }
       }
     }
@@ -229,9 +234,10 @@ export const petshopService = {
         if (img instanceof File) {
           const path = `products/${id}/${Date.now()}-${img.name}`;
           const { error: uploadError } = await supabase.storage.from('petshop-images').upload(path, img, { cacheControl: '3600', upsert: true });
-          if (uploadError) throw new Error(uploadError.message);
+          if (uploadError) handleSupabaseError(uploadError);
           const { data: urlData, error: urlError } = await supabase.storage.from('petshop-images').createSignedUrl(path, 60 * 60);
-          if (urlError || !urlData?.signedURL) throw new Error(urlError?.message || 'Unable to generate image url');
+          if (urlError) handleSupabaseError(urlError);
+          if (!urlData?.signedURL) throw new Error('Unable to generate image url');
           await supabase.from('product_images').insert({ product_id: id, url: urlData.signedURL });
         } else if (img && img.url) {
           await supabase.from('product_images').insert({ product_id: id, url: img.url });
@@ -252,13 +258,14 @@ export const petshopService = {
       ...(updates.stock !== undefined ? { stock: updates.stock } : {})
     };
     const { data, error } = await supabase.from('product_variants').update(transformed).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update variant');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update variant');
     return mapVariant(data);
   },
 
   async updateVariantStock(id: string, stock: number): Promise<boolean> {
     const { error } = await supabase.from('product_variants').update({ stock }).eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 };

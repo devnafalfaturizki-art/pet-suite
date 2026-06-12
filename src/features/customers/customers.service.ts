@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { Customer, CustomerFormData, GetCustomersParams, PaginatedResult, LoyaltyTransaction } from './customers.types';
 
 function mapCustomer(record: any): Customer {
@@ -37,7 +38,7 @@ export const customersService = {
 
     const res = await query.range(offset, offset + pageSize - 1);
 
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
 
     const items: Customer[] = (res.data || []).map(mapCustomer);
     return { items, total: res.count ?? items.length };
@@ -50,7 +51,7 @@ export const customersService = {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) return null;
     return mapCustomer(data);
   },
@@ -68,7 +69,7 @@ export const customersService = {
     };
 
     const { data, error } = await supabase.from('customers').insert(insert).select().single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapCustomer(data);
   },
 
@@ -83,13 +84,13 @@ export const customersService = {
     if (updates.membershipTier !== undefined) payload.membership_tier = updates.membershipTier;
 
     const { data, error } = await supabase.from('customers').update(payload).eq('id', id).select().single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapCustomer(data);
   },
 
   async updateCustomerStatus(id: string, status: string): Promise<Customer> {
     const { data, error } = await supabase.from('customers').update({ status }).eq('id', id).select().single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return mapCustomer(data);
   },
 
@@ -98,7 +99,7 @@ export const customersService = {
       .from('pets')
       .select('id, name, photo_url, customer_id, species_id, breed_id, gender, birth_date, weight, color, is_sterilized, microchip_number, qr_code, is_active, created_at, updated_at, species(name), breeds(name)')
       .eq('customer_id', customerId);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map((record: any) => ({
       id: record.id,
       name: record.name,
@@ -123,7 +124,7 @@ export const customersService = {
 
   async getCustomerInvoices(customerId: string) {
     const { data, error } = await supabase.from('invoices').select('*').eq('customer_id', customerId);
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return data || [];
   },
 
@@ -135,7 +136,7 @@ export const customersService = {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return data || [];
   },
 
@@ -146,7 +147,7 @@ export const customersService = {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+      if (error) handleSupabaseError(error);
     return {
       id: data.id,
       customerId: data.customer_id,

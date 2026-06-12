@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import { posService } from '@/features/pos/pos.service';
 import medicalRecordsService from '@/features/medical-records/medical-records.service';
 import type {
@@ -69,7 +70,7 @@ function mapMedicationSchedule(record: any): MedicationSchedule {
 export const inpatientService = {
   async getCages(): Promise<Cage[]> {
     const { data, error } = await supabase.from('cages').select('id, name, cage_type, status, notes, created_at').order('name');
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapCage);
   },
 
@@ -87,7 +88,7 @@ export const inpatientService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
     const items = Array.isArray(res.data) ? res.data.map(mapInpatientRecord) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
   },
@@ -98,7 +99,7 @@ export const inpatientService = {
       .select('id, pet_id, cage_id, admitting_doctor_id, admit_date, discharge_date, reason, notes, status, created_at, updated_at')
       .eq('id', id)
       .single();
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data ? mapInpatientRecord(data) : null;
   },
 
@@ -117,7 +118,8 @@ export const inpatientService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to admit inpatient');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to admit inpatient');
     return mapInpatientRecord(data);
   },
 
@@ -125,7 +127,8 @@ export const inpatientService = {
     const payload: any = { status };
     if (dischargeDate) payload.discharge_date = dischargeDate;
     const { data, error } = await supabase.from('inpatient_records').update(payload).eq('id', id).select().single();
-    if (error || !data) throw new Error(error?.message || 'Unable to update inpatient status');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update inpatient status');
     const updated = mapInpatientRecord(data);
 
     // If discharged, create invoice linking this inpatient record
@@ -218,7 +221,8 @@ export const inpatientService = {
           // non-fatal
         }
       } catch (err) {
-        throw new Error((err as Error).message || 'Unable to create invoice for discharged inpatient');
+        if ((err as any)?.message) throw err;
+        handleSupabaseError(err as any);
       }
     }
 
@@ -231,7 +235,7 @@ export const inpatientService = {
       .select('id, inpatient_record_id, temperature, appetite, weight, condition, notes, observed_by, observed_at')
       .eq('inpatient_record_id', inpatientRecordId)
       .order('observed_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapObservation);
   },
 
@@ -248,7 +252,8 @@ export const inpatientService = {
       })
       .select()
       .single();
-    if (error || !data) throw new Error(error?.message || 'Unable to add observation');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to add observation');
     return mapObservation(data);
   },
 
@@ -258,7 +263,7 @@ export const inpatientService = {
       .select('id, inpatient_record_id, drug_name, dose, schedule_time, given_at, given_by, status')
       .eq('inpatient_record_id', inpatientRecordId)
       .order('schedule_time', { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return (data || []).map(mapMedicationSchedule);
   },
 
@@ -274,7 +279,8 @@ export const inpatientService = {
       })
       .select()
       .single();
-    if (error || !data) throw new Error(error?.message || 'Unable to schedule medication');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to schedule medication');
     return mapMedicationSchedule(data);
   }
 };

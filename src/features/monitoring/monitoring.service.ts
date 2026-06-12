@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { MonitoringEntry, MonitoringCreatePayload, MonitoringQueryParams, MonitoringUpload } from './monitoring.types';
 
 function mapUpload(record: any): MonitoringUpload {
@@ -41,7 +42,7 @@ export const monitoringService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
 
     return {
       items: Array.isArray(res.data)
@@ -58,7 +59,7 @@ export const monitoringService = {
       .eq('pet_id', petId)
       .order('date', { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return Array.isArray(data) ? data.map((record: any) => mapEntry(record)) : [];
   },
 
@@ -69,7 +70,7 @@ export const monitoringService = {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data ? mapEntry(data, data.uploads) : null;
   },
 
@@ -88,7 +89,8 @@ export const monitoringService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to create monitoring entry');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create monitoring entry');
 
     if (uploads.length) {
       await this.insertUploads(data.id, uploads);
@@ -102,7 +104,7 @@ export const monitoringService = {
   async insertUploads(entryId: string, uploads: Array<Pick<MonitoringUpload, 'filename' | 'url' | 'petId'>>) {
     const rows = uploads.map((upload) => ({ entry_id: entryId, pet_id: upload.petId, filename: upload.filename, url: upload.url, status: 'pending' }));
     const { error } = await supabase.from('monitoring_uploads').insert(rows);
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return true;
   },
 
@@ -113,7 +115,8 @@ export const monitoringService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to upload media');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to upload media');
     return mapUpload(data);
   },
 
@@ -125,7 +128,8 @@ export const monitoringService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to update upload status');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update upload status');
     return mapUpload(data);
   }
 };

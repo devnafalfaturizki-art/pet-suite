@@ -25,8 +25,7 @@ export default function CreateCustomerPage() {
     return Object.keys(e).length === 0;
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate() {
     if (!validate()) return;
     try {
       await mutation.mutateAsync({ fullName, whatsapp, email, address, notes, status, membershipTier: membershipTier || undefined });
@@ -40,7 +39,7 @@ export default function CreateCustomerPage() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Create Customer</h1>
-      <form onSubmit={onSubmit} className="space-y-4 max-w-2xl">
+      <div className="space-y-4 max-w-2xl">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium">Full name</label>
@@ -87,12 +86,12 @@ export default function CreateCustomerPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit" disabled={mutation.isLoading}>
+          <Button type="button" onClick={handleCreate} disabled={mutation.isLoading}>
             <Plus className="w-4 h-4 mr-2" />
             {mutation.isLoading ? 'Saving...' : 'Create Customer'}
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

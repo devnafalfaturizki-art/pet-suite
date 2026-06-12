@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { PortalCustomer, PortalPet, PortalAppointment, PortalInvoice, PortalSummary } from './portal.types';
 
 export const portalService = {
@@ -9,7 +10,7 @@ export const portalService = {
       .eq('profile_id', profileId)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) return null;
 
     return {
@@ -30,7 +31,7 @@ export const portalService = {
       .eq('profile_id', profileId)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return data?.id ?? null;
   },
 
@@ -41,7 +42,7 @@ export const portalService = {
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
 
     return (data || []).map((item: any) => ({
       id: item.id,
@@ -50,6 +51,26 @@ export const portalService = {
       breed: item.breeds?.name ?? 'Unknown',
       photoUrl: item.photo_url ?? null
     }));
+  },
+
+  async getPetForCustomer(customerId: string, petId: string): Promise<PortalPet | null> {
+    const { data, error } = await supabase
+      .from('pets')
+      .select('id, name, photo_url, species(name), breeds(name)')
+      .eq('customer_id', customerId)
+      .eq('id', petId)
+      .single();
+
+    if (error) handleSupabaseError(error);
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      species: data.species?.name ?? 'Unknown',
+      breed: data.breeds?.name ?? 'Unknown',
+      photoUrl: data.photo_url ?? null
+    };
   },
 
   async getUpcomingAppointments(customerId: string): Promise<PortalAppointment[]> {
@@ -62,7 +83,7 @@ export const portalService = {
       .order('appointment_date', { ascending: true })
       .limit(10);
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
 
     return (data || []).map((item: any) => ({
       id: item.id,
@@ -83,7 +104,7 @@ export const portalService = {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
 
     return (data || []).map((invoice: any) => ({
       id: invoice.id,
@@ -100,9 +121,9 @@ export const portalService = {
       supabase.from('invoices').select('id', { count: 'exact' }).eq('customer_id', customerId)
     ]);
 
-    if (petResult.error) throw new Error(petResult.error.message);
-    if (appointmentResult.error) throw new Error(appointmentResult.error.message);
-    if (invoiceResult.error) throw new Error(invoiceResult.error.message);
+    if (petResult.error) handleSupabaseError(petResult.error);
+    if (appointmentResult.error) handleSupabaseError(appointmentResult.error);
+    if (invoiceResult.error) handleSupabaseError(invoiceResult.error);
 
     return {
       petCount: petResult.count ?? 0,

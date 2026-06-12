@@ -21,7 +21,13 @@ export default function PortalPetsPage() {
                 <div>
                   <h2 className="text-lg font-semibold">{pet.name}</h2>
                   <p className="text-sm text-slate-500">{pet.species} / {pet.breed}</p>
-                  <Link to={`/staff/pets/${pet.id}`} className="mt-3 inline-flex text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300">View profile</Link>
+                  <Link
+                    to={`/portal/pets/${pet.id}`}
+                    aria-label={`View profile for ${pet.name}`}
+                    className="mt-3 inline-flex text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300"
+                  >
+                    View profile
+                  </Link>
                 </div>
               </div>
             </Card>

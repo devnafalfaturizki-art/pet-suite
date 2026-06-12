@@ -91,7 +91,7 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
             onToggleSidebar={() => setIsMobileSidebarOpen((open) => !open)}
           />
           <div className="border-b border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 lg:px-6">
-            <nav className="flex flex-wrap items-center gap-2">
+            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
               {breadcrumbSegments.length ? (
                 breadcrumbSegments.map((segment, index) => (
                   <span key={segment.path} className="inline-flex items-center gap-2">
@@ -110,12 +110,23 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
               )}
             </nav>
           </div>
-          <main className={`px-4 py-5 sm:px-6 lg:px-8 ${isSidebarCollapsed ? 'lg:pl-24' : ''}`}>
+          <main data-main-content className={`px-4 py-5 sm:px-6 lg:px-8 ${isSidebarCollapsed ? 'lg:pl-24' : ''}`}>
             {children ?? <Outlet />}
           </main>
         </div>
       </div>
-      {isMobileSidebarOpen && <div className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden" onClick={() => setIsMobileSidebarOpen(false)} />}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          role="button"
+          aria-label="Close sidebar"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setIsMobileSidebarOpen(false);
+          }}
+        />
+      )}
       <CommandPalette open={isPaletteOpen} onClose={() => setCommandPaletteOpen(false)} routes={getCommandRoutes(role, modules)} />
     </div>
   );

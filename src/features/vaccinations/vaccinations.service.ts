@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import type { VaccinationRecord, VaccinationCreatePayload, VaccinationsQueryParams, VaccinationCertificate } from './vaccinations.types';
 
 export const vaccinationsService = {
@@ -16,7 +17,7 @@ export const vaccinationsService = {
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) handleSupabaseError(res.error);
 
     return {
       items: Array.isArray(res.data) ? res.data.map((record: any) => ({
@@ -40,7 +41,7 @@ export const vaccinationsService = {
       .eq('pet_id', petId)
       .order('date_administered', { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     return Array.isArray(data)
       ? data.map((record: any) => ({
           id: record.id,
@@ -69,7 +70,8 @@ export const vaccinationsService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to create vaccination record');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create vaccination record');
     return {
       id: data.id,
       petId: data.pet_id,
@@ -89,7 +91,7 @@ export const vaccinationsService = {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) return null;
 
     return {
@@ -120,7 +122,8 @@ export const vaccinationsService = {
       .select()
       .single();
 
-    if (error || !data) throw new Error(error?.message || 'Unable to attach certificate URL');
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to attach certificate URL');
 
     return {
       id: data.id,

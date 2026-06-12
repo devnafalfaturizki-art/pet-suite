@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Button, Card, Input } from '@/components/ui';
 import { posService } from '@/features/pos/pos.service';
 import type { Invoice, InvoiceItem } from '@/features/pos/pos.types';
@@ -45,7 +46,7 @@ export default function InvoiceReviewModal({ inpatientId, onClose }: { inpatient
       setInvoice(updated);
       onClose(true);
     } catch (err) {
-      // TODO: show error
+      toast.error('Failed to save invoice. Please try again.');
     } finally {
       setIsSaving(false);
     }

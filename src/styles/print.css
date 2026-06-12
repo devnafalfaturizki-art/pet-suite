@@ -1,0 +1,50 @@
+@media print {
+  html,
+  body,
+  #root {
+    background: white !important;
+    color: #000 !important;
+  }
+
+  body {
+    min-height: auto;
+    color-scheme: light;
+  }
+
+  [data-sidebar],
+  [data-navbar],
+  .fixed,
+  .sticky,
+  .shadow-xl,
+  .shadow-slate-900\/10,
+  .bg-slate-950,
+  .bg-slate-50,
+  .bg-slate-900,
+  .bg-slate-950,
+  .bg-slate-100,
+  .bg-white {
+    display: none !important;
+  }
+
+  [data-main-content] {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+  }
+
+  img,
+  table {
+    page-break-inside: avoid !important;
+  }
+}

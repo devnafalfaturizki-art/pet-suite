@@ -10,13 +10,14 @@ interface CartState {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, qty: number) => void;
   setItemDiscount: (id: string, amount: number) => void;
-  setCustomer: (id?: string | null, name?: string | null, loyaltyPoints?: number) => void;
+  setCustomer: (id?: string | null, name?: string | null, loyaltyPoints?: number, phone?: string | null) => void;
   setLoyaltyRedeem: (points: number) => void;
   setPaymentMethod: (method: PaymentMethod) => void;
   toggleSplitPayment: (enabled: boolean) => void;
   setSecondaryMethod: (method: PaymentMethod) => void;
   setPaidAmount: (amount: number) => void;
   setPaidAmountSecondary: (amount: number) => void;
+  setReference: (reference: string | null) => void;
   loadInpatientBill: (items: CartItem[]) => void;
   clearCart: () => void;
 }
@@ -27,7 +28,10 @@ function computeTotals(cart: Cart, paymentData: PaymentData) {
   const loyaltyDiscount = cart.loyaltyPointsToRedeem ? (cart.loyaltyPointsToRedeem * LOYALTY_REDEEM_RATE) : 0;
   const total = Math.max(0, subtotal - discountTotal - loyaltyDiscount);
   const paid = (paymentData.paidAmount || 0) + (paymentData.splitEnabled ? (paymentData.paidAmountSecondary || 0) : 0);
-  const changeAmount = paymentData.method === 'cash' ? Math.max(0, paid - total) : 0;
+  const cashPaid = paymentData.splitEnabled
+    ? (paymentData.method === 'cash' ? (paymentData.paidAmount || 0) : 0) + (paymentData.methodSecondary === 'cash' ? (paymentData.paidAmountSecondary || 0) : 0)
+    : (paymentData.method === 'cash' ? (paymentData.paidAmount || 0) : 0);
+  const changeAmount = Math.max(0, cashPaid - total);
   return { subtotal, discountTotal, loyaltyDiscount, total, changeAmount };
 }
 
@@ -98,9 +102,9 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
   },
 
-  setCustomer: (id, name, loyaltyPoints = 0) => {
+  setCustomer: (id, name, loyaltyPoints = 0, phone = null) => {
     set((state) => {
-      const newCart = { ...state.cart, customerId: id, customerName: name, loyaltyPointsAvailable: loyaltyPoints };
+      const newCart = { ...state.cart, customerId: id, customerName: name, customerPhone: phone, loyaltyPointsAvailable: loyaltyPoints };
       const totals = computeTotals(newCart, state.paymentData);
       newCart.subtotal = totals.subtotal;
       newCart.discountTotal = totals.discountTotal;
@@ -134,7 +138,16 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   toggleSplitPayment: (enabled) => {
     set((state) => {
-      const newPayment = { ...state.paymentData, splitEnabled: enabled } as PaymentData;
+      const newPayment = {
+        ...state.paymentData,
+        splitEnabled: enabled,
+        methodSecondary: enabled ? state.paymentData.methodSecondary : undefined,
+        paidAmountSecondary: enabled ? state.paymentData.paidAmountSecondary : undefined
+      } as PaymentData;
+      if (!enabled) {
+        newPayment.methodSecondary = undefined;
+        newPayment.paidAmountSecondary = undefined;
+      }
       const totals = computeTotals(state.cart, newPayment);
       newPayment.changeAmount = totals.changeAmount;
       return { paymentData: newPayment };
@@ -142,7 +155,12 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   setSecondaryMethod: (method) => {
-    set((state) => ({ paymentData: { ...state.paymentData, methodSecondary: method } as PaymentData }));
+    set((state) => {
+      const newPayment = { ...state.paymentData, methodSecondary: method } as PaymentData;
+      const totals = computeTotals(state.cart, newPayment);
+      newPayment.changeAmount = totals.changeAmount;
+      return { paymentData: newPayment };
+    });
   },
 
   setPaidAmount: (amount) => {
@@ -163,6 +181,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
   },
 
+  setReference: (reference) => {
+    set((state) => ({ paymentData: { ...state.paymentData, reference } as PaymentData }));
+  },
+
   loadInpatientBill: (items) => {
     set((state) => {
       const newCart = { ...state.cart, items };
@@ -176,7 +198,21 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   clearCart: () => {
-    set(() => ({ cart: { items: [], subtotal: 0, discountTotal: 0, loyaltyDiscount: 0, total: 0 }, paymentData: { method: 'cash', paidAmount: 0, changeAmount: 0, splitEnabled: false } }));
+    set(() => ({
+      cart: {
+        items: [],
+        customerId: null,
+        customerName: null,
+        customerPhone: null,
+        loyaltyPointsAvailable: 0,
+        loyaltyPointsToRedeem: 0,
+        subtotal: 0,
+        discountTotal: 0,
+        loyaltyDiscount: 0,
+        total: 0
+      },
+      paymentData: { method: 'cash', paidAmount: 0, paidAmountSecondary: 0, changeAmount: 0, splitEnabled: false, reference: null }
+    }));
   }
 }));
 

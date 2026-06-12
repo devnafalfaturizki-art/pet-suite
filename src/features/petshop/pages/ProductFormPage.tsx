@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Upload, Image, Edit3, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -117,7 +118,7 @@ export default function ProductFormPage() {
       }
       navigate('/staff/petshop');
     } catch (error) {
-      console.error(error);
+      toast.error('Failed to save product. Please try again.');
     }
   }
 
