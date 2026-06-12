@@ -17,6 +17,9 @@ export interface InpatientRecord {
   reason?: string | null;
   notes?: string | null;
   status: string;
+  petName?: string | null;
+  doctorName?: string | null;
+  cageName?: string | null;
   createdAt: string;
   updatedAt: string;
 }

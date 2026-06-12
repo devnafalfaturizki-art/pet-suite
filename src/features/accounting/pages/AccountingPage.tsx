@@ -62,12 +62,15 @@ export default function AccountingPage() {
   }
 
   async function handleExportPL() {
-    try {
-      // invoke edge function to generate PDF
-      await fetch('/api/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'profit-loss', month: plMonth, year: plYear }) });
-      // note: adapt to your Edge Functions / server route
-    } catch (e) {
-      toast.error('Failed to export PDF. Please try again.');
+    const { data, error } = await supabase.functions.invoke('generate-pdf', {
+      body: { type: 'profit-loss', month: plMonth, year: plYear }
+    });
+    if (error) {
+      toast.error('Failed to generate PDF');
+      return;
+    }
+    if (data?.url) {
+      window.open(data.url, '_blank');
     }
   }
 

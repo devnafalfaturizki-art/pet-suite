@@ -12,6 +12,20 @@ export function useRetryNotification() {
   });
 }
 
+export function useMarkAsRead() {
+  const qc = useQueryClient();
+  return useMutation((id: string) => notificationsService.markAsRead(id), {
+    onSuccess: () => qc.invalidateQueries(['notificationLogs'])
+  });
+}
+
+export function useMarkAllRead() {
+  const qc = useQueryClient();
+  return useMutation(() => notificationsService.markAllRead(), {
+    onSuccess: () => qc.invalidateQueries(['notificationLogs'])
+  });
+}
+
 export function useTemplates() {
   return useQuery(['notificationTemplates'], () => notificationsService.getTemplates());
 }

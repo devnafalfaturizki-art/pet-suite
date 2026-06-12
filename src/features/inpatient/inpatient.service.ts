@@ -35,6 +35,9 @@ function mapInpatientRecord(record: any): InpatientRecord {
     reason: record.reason,
     notes: record.notes,
     status: record.status,
+    petName: record.pets?.name ?? null,
+    doctorName: record.doctors?.profiles?.full_name ?? null,
+    cageName: record.cages?.name ?? null,
     createdAt: record.created_at,
     updatedAt: record.updated_at
   };
@@ -74,33 +77,52 @@ export const inpatientService = {
     return (data || []).map(mapCage);
   },
 
+  async searchPets(query: string): Promise<Array<{ id: string; name: string }>> {
+    const q = query?.trim();
+    const { data, error } = await supabase
+      .from('pets')
+      .select('id, name')
+      .ilike('name', `%${q}%`)
+      .limit(20);
+    if (error) handleSupabaseError(error);
+    return Array.isArray(data) ? data.map((pet: any) => ({ id: pet.id, name: pet.name })) : [];
+  },
+
+  async searchDoctors(query: string): Promise<Array<{ id: string; full_name: string }>> {
+    const q = query?.trim();
+    const { data, error } = await supabase
+      .from('doctors')
+      .select('id, profiles(full_name)')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) handleSupabaseError(error);
+
+    const providers = Array.isArray(data) ? data : [];
+    const normalized = q?.toLowerCase() || '';
+    const filtered = normalized
+      ? providers.filter((doctor: any) => doctor.profiles?.full_name?.toLowerCase().includes(normalized))
+      : providers;
+
+    return filtered.map((doctor: any) => ({ id: doctor.id, full_name: doctor.profiles?.full_name ?? 'Doctor' }));
+  },
+
   async getInpatientRecords({ page = 1, pageSize = 12, search, status }: InpatientQueryParams = {}): Promise<{ items: InpatientRecord[]; total: number }> {
     const offset = (page - 1) * pageSize;
     let query: any = supabase
       .from('inpatient_records')
-      .select('id, pet_id, cage_id, admitting_doctor_id, admit_date, discharge_date, reason, status, created_at, updated_at', { count: 'exact' })
+      .select('id, pet_id, cage_id, admitting_doctor_id, admit_date, discharge_date, reason, notes, status, created_at, updated_at, pets(name), cages(name), doctors(profiles(full_name))', { count: 'exact' })
       .order('admit_date', { ascending: false });
 
     if (status) query = query.eq('status', status);
     if (search) {
       const term = `%${search}%`;
-      query = query.or(`pet_id.ilike.${term},reason.ilike.${term}`);
+      query = query.or(`reason.ilike.${term},notes.ilike.${term}`);
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
     if (res.error) handleSupabaseError(res.error);
     const items = Array.isArray(res.data) ? res.data.map(mapInpatientRecord) : [];
     return { items, total: typeof res.count === 'number' ? res.count : items.length };
-  },
-
-  async getInpatientRecordById(id: string): Promise<InpatientRecord | null> {
-    const { data, error } = await supabase
-      .from('inpatient_records')
-      .select('id, pet_id, cage_id, admitting_doctor_id, admit_date, discharge_date, reason, notes, status, created_at, updated_at')
-      .eq('id', id)
-      .single();
-    if (error) handleSupabaseError(error);
-    return data ? mapInpatientRecord(data) : null;
   },
 
   async createInpatientRecord(payload: InpatientCreatePayload): Promise<InpatientRecord> {
@@ -123,110 +145,80 @@ export const inpatientService = {
     return mapInpatientRecord(data);
   },
 
+  async admitPet(payload: InpatientCreatePayload): Promise<InpatientRecord> {
+    return this.createInpatientRecord(payload);
+  },
+
+  async getInpatientRecordById(id: string): Promise<InpatientRecord | null> {
+    const { data, error } = await supabase
+      .from('inpatient_records')
+      .select('id, pet_id, cage_id, admitting_doctor_id, admit_date, discharge_date, reason, notes, status, created_at, updated_at, pets(name), cages(name), doctors(profiles(full_name))')
+      .eq('id', id)
+      .single();
+    if (error) handleSupabaseError(error);
+    return data ? mapInpatientRecord(data) : null;
+  },
+
+  async getInpatientBill(inpatientRecordId: string) {
+    const items = await posService.getInpatientPendingBill(inpatientRecordId);
+    const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    return { items, total };
+  },
+
+  async dischargePet(id: string, payload: { paymentMethod: string; paidAmount: number; notes?: string; dischargeDate?: string }) {
+    if (payload.paidAmount < 0) {
+      throw new Error('Paid amount must be a non-negative number');
+    }
+
+    const { data: recordData, error: recordError } = await supabase.from('inpatient_records').select('pet_id').eq('id', id).single();
+    if (recordError) handleSupabaseError(recordError);
+    if (!recordData) throw new Error('Inpatient record not found');
+
+    const petId = recordData.pet_id;
+    const { data: petData, error: petError } = await supabase.from('pets').select('customer_id').eq('id', petId).single();
+    if (petError && petError.code !== 'PGRST116') handleSupabaseError(petError);
+
+    const customerId = petData?.customer_id ?? null;
+    const bill = await this.getInpatientBill(id);
+    if (payload.paidAmount < bill.total) {
+      throw new Error('Paid amount must cover the bill total');
+    }
+
+    const updatedRecord = await this.updateInpatientStatus(id, 'discharged', payload.dischargeDate ?? new Date().toISOString().slice(0, 10));
+    await posService.createInvoice({
+      customer_id: customerId,
+      inpatient_record_id: id,
+      subtotal: bill.total,
+      discount_amount: 0,
+      loyalty_points_used: 0,
+      loyalty_discount_amount: 0,
+      total: bill.total,
+      payment_method: payload.paymentMethod as any,
+      paid_amount: payload.paidAmount,
+      change_amount: Math.max(0, payload.paidAmount - bill.total),
+      status: 'paid',
+      notes: payload.notes,
+      items: bill.items.map((item) => ({
+        item_type: item.itemType,
+        reference_id: item.referenceId ?? null,
+        name: item.name,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        discount: item.discountAmount,
+        total: item.total
+      }))
+    });
+
+    return updatedRecord;
+  },
+
   async updateInpatientStatus(id: string, status: string, dischargeDate?: string): Promise<InpatientRecord> {
     const payload: any = { status };
     if (dischargeDate) payload.discharge_date = dischargeDate;
     const { data, error } = await supabase.from('inpatient_records').update(payload).eq('id', id).select().single();
     if (error) handleSupabaseError(error);
     if (!data) throw new Error('Unable to update inpatient status');
-    const updated = mapInpatientRecord(data);
-
-    // If discharged, create invoice linking this inpatient record
-    if (status === 'discharged') {
-      // gather potential billable items: medication schedules and prescriptions
-      let invoiceItems: Array<any> = [];
-
-      try {
-        const medSchedules = await this.getMedicationSchedules(id);
-        const medScheduleItems = (medSchedules || []).map((ms) => ({
-          itemType: 'medication_schedule',
-          referenceId: ms.id,
-          name: `${ms.drugName} (medication)`,
-          quantity: 1,
-          unitPrice: 0,
-          discount: 0,
-          total: 0
-        }));
-        invoiceItems = invoiceItems.concat(medScheduleItems);
-      } catch (_) {
-        // ignore failures fetching medication schedules — proceed with invoice creation
-      }
-
-      // gather prescriptions from recent medical records of the pet
-      try {
-        if (updated.petId) {
-          const records = await medicalRecordsService.getMedicalRecords({ page: 1, pageSize: 100, petId: updated.petId });
-          for (const rec of records.items) {
-            try {
-              const full = await medicalRecordsService.getMedicalRecordById(rec.id);
-              if (full && Array.isArray(full.prescriptions)) {
-                const presItems = full.prescriptions.map((p: any) => ({
-                  itemType: 'prescription',
-                  referenceId: rec.id,
-                  name: `${p.medication} (prescription)`,
-                  quantity: 1,
-                  unitPrice: 0,
-                  discount: 0,
-                  total: 0
-                }));
-                invoiceItems = invoiceItems.concat(presItems);
-              }
-            } catch (_) {
-              // ignore individual medical record fetch failures
-            }
-          }
-        }
-      } catch (_) {
-        // ignore failures fetching medical records
-      }
-
-      // always include a placeholder inpatient stay line
-      invoiceItems.unshift({
-        itemType: 'inpatient_record',
-        referenceId: id,
-        name: `Inpatient stay - ${id}`,
-        quantity: 1,
-        unitPrice: 0,
-        discount: 0,
-        total: 0
-      });
-
-      try {
-        const createdInvoice = await posService.createInvoice({
-          inpatientRecordId: id,
-          subtotal: 0,
-          discountAmount: 0,
-          loyaltyPointsUsed: 0,
-          total: 0,
-          paymentMethod: 'Cash',
-          paidAmount: 0,
-          changeAmount: 0,
-          status: 'pending',
-          notes: `Auto-generated invoice for inpatient discharge ${id}`,
-          items: invoiceItems
-        });
-
-        // record audit log for auto-created invoice
-        try {
-          await supabase.from('audit_logs').insert({
-            user_id: null,
-            action: 'auto_create_invoice',
-            table_name: 'invoices',
-            record_id: createdInvoice.id,
-            old_value: null,
-            new_value: JSON.stringify(createdInvoice),
-            ip_address: null
-          });
-        } catch (_) {
-          // non-fatal
-        }
-      } catch (err) {
-        if ((err as any)?.message) throw err;
-        handleSupabaseError(err as any);
-      }
-    }
-
-    return updated;
+    return mapInpatientRecord(data);
   },
 
   async getObservations(inpatientRecordId: string): Promise<Observation[]> {

@@ -23,3 +23,10 @@ export function useCreateGroomingRecord() {
     onSuccess: () => qc.invalidateQueries(['groomingRecords'])
   });
 }
+
+export function useCompleteGrooming() {
+  const qc = useQueryClient();
+  return useMutation(({ id, payload }: { id: string; payload: { completedAt: string; photoBeforeUrl?: string | null; photoAfterUrl?: string | null; notes?: string } }) => groomingService.completeGrooming(id, payload), {
+    onSuccess: () => qc.invalidateQueries(['groomingRecords'])
+  });
+}

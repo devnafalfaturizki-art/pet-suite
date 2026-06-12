@@ -4,6 +4,7 @@ import { Card, Input, Button } from '@/components/ui';
 import { useDoctorStats } from '../reports.hooks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { DataTable } from '@/components/common/DataTable';
+import { formatCurrency } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DoctorReportsPage() {
@@ -27,21 +28,42 @@ export default function DoctorReportsPage() {
       </div>
 
       <Card className="p-4">
-        <DataTable columns={[{ key: 'doctorName', header: 'Doctor' }, { key: 'patients', header: 'Patients' }, { key: 'services', header: 'Services' }, { key: 'revenue', header: 'Revenue', render: (r: any) => (r.revenue || 0).toLocaleString() }]} data={rows} isLoading={q.isLoading} />
+        <DataTable
+          columns={[
+            { key: 'doctorName', header: 'Doctor' },
+            { key: 'patients', header: 'Patients' },
+            { key: 'services', header: 'Services' },
+            { key: 'revenue', header: 'Revenue', render: (r: any) => formatCurrency(r.revenue || 0) }
+          ]}
+          data={rows}
+          isLoading={q.isLoading}
+          emptyTitle="No doctor data"
+          emptyDescription="Select a month and year to view doctor performance."
+        />
       </Card>
 
       <Card className="p-4">
         <h3 className="font-semibold mb-2">Revenue by doctor</h3>
-        <div style={{ height: 300 }}>
-          <ResponsiveContainer>
-            <BarChart data={rows}>
-              <XAxis dataKey="doctorName" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="revenue" fill="#2563eb" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {q.isLoading ? (
+          <div className="h-72">
+            <div className="h-full rounded-3xl bg-slate-100" />
+          </div>
+        ) : rows.length ? (
+          <div style={{ height: 320 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={rows} layout="vertical" margin={{ left: 100, right: 20, top: 20, bottom: 20 }}>
+                <XAxis type="number" />
+                <YAxis type="category" dataKey="doctorName" width={140} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Bar dataKey="revenue" fill="#2563eb" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="p-10">
+            <p className="text-sm text-slate-500">No revenue data for this period.</p>
+          </div>
+        )}
       </Card>
     </div>
   );

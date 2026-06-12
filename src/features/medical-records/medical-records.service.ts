@@ -71,7 +71,7 @@ function mapSummaryRecord(record: any): MedicalRecord {
 }
 
 export const medicalRecordsService = {
-  async getMedicalRecords({ page = 1, pageSize = 20, search, petId, doctorId }: MedicalRecordsQueryParams = {}) {
+  async getMedicalRecords({ page = 1, pageSize = 20, search, petId, doctorId, recordType }: MedicalRecordsQueryParams = {}) {
     const offset = (page - 1) * pageSize;
     let query: any = supabase
       .from('medical_records')
@@ -80,6 +80,7 @@ export const medicalRecordsService = {
 
     if (petId) query = query.eq('pet_id', petId);
     if (doctorId) query = query.eq('doctor_id', doctorId);
+    if (recordType && recordType !== 'all') query = query.eq('record_type', recordType);
     if (search) {
       const term = `%${search}%`;
       query = query.or(`pets.name.ilike.${term},doctors.profiles.full_name.ilike.${term},record_type.ilike.${term},notes.ilike.${term}`);

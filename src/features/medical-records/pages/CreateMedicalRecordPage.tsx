@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Upload } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { useCreateMedicalRecord } from '../medical-records.hooks';
+import { useAppointment } from '@/features/appointments/appointments.hooks';
+import { useGetPets } from '@/features/pets/pets.hooks';
+import { useDoctors } from '@/features/appointments/appointments.hooks';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const emptyPrescription = { medication: '', dosage: '', frequency: '', duration: '' };
 
 export default function CreateMedicalRecordPage() {
   const [searchParams] = useSearchParams();
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [petId, setPetId] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [date, setDate] = useState('');
@@ -21,10 +26,27 @@ export default function CreateMedicalRecordPage() {
   const navigate = useNavigate();
   const mutation = useCreateMedicalRecord();
 
+  useDocumentTitle('Create Medical Record');
+
   useEffect(() => {
     const paramPetId = searchParams.get('petId');
+    const paramAppointmentId = searchParams.get('appointmentId');
     if (paramPetId) setPetId(paramPetId);
+    if (paramAppointmentId) setAppointmentId(paramAppointmentId);
   }, [searchParams]);
+
+  const appointmentQuery = useAppointment(appointmentId || undefined);
+  const petsQuery = useGetPets({ page: 1, pageSize: 200, search: '' });
+  const doctorsQuery = useDoctors('');
+  const pets = petsQuery.data?.items ?? [];
+  const doctors = doctorsQuery.data ?? [];
+
+  useEffect(() => {
+    if (!appointmentQuery.data) return;
+    setPetId(appointmentQuery.data.petId);
+    setDoctorId(appointmentQuery.data.doctorId ?? '');
+    setDate(appointmentQuery.data.appointmentDate);
+  }, [appointmentQuery.data]);
 
   function setPrescriptionField(index: number, field: keyof typeof emptyPrescription, value: string) {
     setPrescriptions((current) => current.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
@@ -46,8 +68,8 @@ export default function CreateMedicalRecordPage() {
 
   function validate() {
     const nextErrors: Record<string, string> = {};
-    if (!petId.trim()) nextErrors.petId = 'Pet ID is required';
-    if (!doctorId.trim()) nextErrors.doctorId = 'Doctor ID is required';
+    if (!petId.trim()) nextErrors.petId = 'Pet is required';
+    if (!doctorId.trim()) nextErrors.doctorId = 'Doctor is required';
     if (!date) nextErrors.date = 'Visit date is required';
     if (!soap.subjective.trim()) nextErrors.subjective = 'Subjective field is required';
     if (!soap.objective.trim()) nextErrors.objective = 'Objective field is required';
@@ -68,6 +90,7 @@ export default function CreateMedicalRecordPage() {
 
     const filteredPrescriptions = prescriptions.filter((prescription) => prescription.medication.trim());
     const payload = {
+      appointmentId,
       petId,
       doctorId,
       recordType,
@@ -95,16 +118,38 @@ export default function CreateMedicalRecordPage() {
         description="Capture SOAP notes, prescriptions, and supporting attachments for a pet visit."
       />
 
-      <div className="space-y-6 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+      <form className="space-y-6 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Pet ID</label>
-            <Input value={petId} onChange={(event) => setPetId(event.target.value)} />
+            <label className="block text-sm font-medium text-slate-700">Patient</label>
+            <Select value={petId} onValueChange={(value) => setPetId(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a pet" />
+              </SelectTrigger>
+              <SelectContent>
+                {pets.map((pet: any) => (
+                  <SelectItem key={pet.id} value={pet.id}>
+                    {pet.name} {pet.species ? `· ${pet.species}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.petId && <p className="mt-1 text-sm text-red-600">{errors.petId}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Doctor ID</label>
-            <Input value={doctorId} onChange={(event) => setDoctorId(event.target.value)} />
+            <label className="block text-sm font-medium text-slate-700">Doctor</label>
+            <Select value={doctorId} onValueChange={(value) => setDoctorId(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a doctor" />
+              </SelectTrigger>
+              <SelectContent>
+                {doctors.map((doctor: any) => (
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.doctorId && <p className="mt-1 text-sm text-red-600">{errors.doctorId}</p>}
           </div>
           <div>
@@ -114,25 +159,17 @@ export default function CreateMedicalRecordPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Record Type</label>
-            <select
-              value={recordType}
-              onChange={(event) => setRecordType(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="consultation">Consultation</option>
-              <option value="follow-up">Follow-up</option>
-              <option value="emergency">Emergency</option>
-              <option value="surgery">Surgery</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700">Notes</label>
-            <textarea
-              rows={3}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
+            <Select value={recordType} onValueChange={(value) => setRecordType(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select record type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="consultation">Consultation</SelectItem>
+                <SelectItem value="follow-up">Follow-up</SelectItem>
+                <SelectItem value="emergency">Emergency</SelectItem>
+                <SelectItem value="surgery">Surgery</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700">Notes</label>

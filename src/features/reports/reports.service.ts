@@ -58,9 +58,11 @@ export const reportsService = {
 
     const totalPatients = new Set((records || []).map((r: any) => r.pet_id)).size;
 
-    const { data: appts = [], error: apptErr } = await supabase.from('appointments').select('customer_id, created_at').gte('created_at', f).lte('created_at', t);
+    const { data: appts = [], error: apptErr } = await supabase.from('appointments').select('customer_id, status, created_at').gte('created_at', f).lte('created_at', t);
     if (apptErr) handleSupabaseError(apptErr);
     const newPatients = new Set((appts || []).map((a: any) => a.customer_id)).size;
+    const appointmentCount = (appts || []).length;
+    const completedAppointments = (appts || []).filter((a: any) => a.status === 'completed').length;
 
     const diagCount: Record<string, number> = {};
     (records || []).forEach((r: any) => { const key = (r.assessment || 'Unknown').trim(); if (!key) return; diagCount[key] = (diagCount[key] || 0) + 1; });
@@ -69,7 +71,7 @@ export const reportsService = {
     const typeBreakdown: Record<string, number> = {};
     (records || []).forEach((r: any) => { typeBreakdown[r.record_type] = (typeBreakdown[r.record_type] || 0) + 1; });
 
-    return { totalPatients, newPatients, topDiagnoses, typeBreakdown };
+    return { totalPatients, newPatients, appointmentCount, completedAppointments, topDiagnoses, typeBreakdown };
   },
 
   async getDoctorStats(from?: string, to?: string) {
@@ -114,21 +116,75 @@ export const reportsService = {
   },
 
   async getInventoryStats() {
-    const { data: low = [], error: lowErr } = await supabase.from('inventory_items').select('id').lte('current_stock', supabase.rpc ? 0 : 0); // fallback
-    // safer: compute low stock count via query for items where current_stock <= min_stock
-    const { data: low2, error: low2Err } = await supabase.from('inventory_items').select('id').filter('current_stock', 'lte', 'min_stock');
-    const lowCount = (low2 || []).length;
-
     const now = new Date();
-    const plus30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const plus90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const { data: exp30 = [], error: e30 } = await supabase.from('inventory_batches').select('id').gte('expiry_date', now.toISOString().slice(0,10)).lte('expiry_date', plus30);
-    const { data: exp90 = [], error: e90 } = await supabase.from('inventory_batches').select('id').gte('expiry_date', now.toISOString().slice(0,10)).lte('expiry_date', plus90);
+    const today = now.toISOString().split('T')[0];
+    const threshold30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const threshold90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const { data: items = [], error: itErr } = await supabase.from('inventory_items').select('current_stock, price_per_unit');
-    const totalValue = (items || []).reduce((s: number, it: any) => s + Number(it.current_stock || 0) * Number(it.price_per_unit || 0), 0);
+    const { data: items = [], error: itemErr } = await supabase
+      .from('inventory_items')
+      .select('id, name, category_id, current_stock, min_stock, price_per_unit, inventory_categories(name as category_name)');
+    if (itemErr) handleSupabaseError(itemErr);
 
-    return { lowStockCount: lowCount, expiring30: (exp30 || []).length, expiring90: (exp90 || []).length, totalValue };
+    const lowStockItems = Array.isArray(items)
+      ? items
+          .map((record: any) => ({
+            id: record.id,
+            name: record.name,
+            categoryName: record.category_name || 'Uncategorized',
+            currentStock: Number(record.current_stock || 0),
+            minStock: Number(record.min_stock || 0)
+          }))
+          .filter((item) => item.currentStock <= item.minStock)
+      : [];
+
+    const stockValueByCategoryMap: Record<string, { categoryId: string; categoryName: string; value: number }> = {};
+    (items || []).forEach((record: any) => {
+      const categoryId = record.category_id || 'unknown';
+      const categoryName = record.category_name || 'Uncategorized';
+      const value = Number(record.current_stock || 0) * Number(record.price_per_unit || 0);
+      if (!stockValueByCategoryMap[categoryId]) {
+        stockValueByCategoryMap[categoryId] = { categoryId, categoryName, value };
+      } else {
+        stockValueByCategoryMap[categoryId].value += value;
+      }
+    });
+    const stockValueByCategory = Object.values(stockValueByCategoryMap).sort((a, b) => b.value - a.value);
+
+    const { data: batches = [], error: batchErr } = await supabase
+      .from('inventory_batches')
+      .select('id, item_id, batch_number, quantity, expiry_date, inventory_items(name as item_name)')
+      .gte('expiry_date', today)
+      .lte('expiry_date', threshold90)
+      .order('expiry_date', { ascending: true });
+    if (batchErr) handleSupabaseError(batchErr);
+
+    const expiringBatches = (Array.isArray(batches) ? batches : []).map((record: any) => {
+      const expiryDate = record.expiry_date;
+      const daysRemaining = expiryDate ? Math.max(0, Math.ceil((new Date(expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+      return {
+        id: record.id,
+        itemName: record.item_name || 'Unknown item',
+        batchNumber: record.batch_number,
+        quantity: Number(record.quantity || 0),
+        expiryDate,
+        daysRemaining
+      };
+    });
+
+    const totalValue = stockValueByCategory.reduce((sum, entry) => sum + entry.value, 0);
+    const expiring30 = expiringBatches.filter((batch) => batch.daysRemaining <= 30).length;
+    const expiring90 = expiringBatches.length;
+
+    return {
+      lowStockCount: lowStockItems.length,
+      expiring30,
+      expiring90,
+      totalValue,
+      lowStockItems,
+      expiringBatches,
+      stockValueByCategory
+    };
   },
 
   async getProductStats(from?: string, to?: string) {

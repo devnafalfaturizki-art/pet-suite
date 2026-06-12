@@ -53,4 +53,5 @@ export interface MedicalRecordsQueryParams {
   search?: string;
   petId?: string;
   doctorId?: string;
+  recordType?: string;
 }

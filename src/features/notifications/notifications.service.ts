@@ -34,6 +34,18 @@ export const notificationsService = {
     }
   },
 
+  async markAsRead(id: string) {
+    const { error } = await supabase.from('notifications_log').update({ read_at: new Date().toISOString() }).eq('id', id);
+    if (error) handleSupabaseError(error);
+    return true;
+  },
+
+  async markAllRead() {
+    const { error } = await supabase.from('notifications_log').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    if (error) handleSupabaseError(error);
+    return true;
+  },
+
   async getTemplates(): Promise<NotificationTemplate[]> {
     const { data, error } = await supabase.from('settings').select('value').eq('key', 'notification_templates').single();
     if (error) handleSupabaseError(error);

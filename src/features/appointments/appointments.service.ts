@@ -77,15 +77,14 @@ export const appointmentsService = {
     if (to) query = query.lte('appointment_date', to);
 
     if (search) {
-      const serviceIds = await this.searchServiceIds(search);
-      if (serviceIds.length === 0) {
-        return { items: [], total: 0 };
-      }
-      query = query.in('service_id', serviceIds);
+      const term = `%${search}%`;
+      query = query.or(
+        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term},queue_number.ilike.${term}`
+      );
     }
 
     const res = await query.range(offset, offset + pageSize - 1);
-      if (res.error) handleSupabaseError(res.error);
+    if (res.error) handleSupabaseError(res.error);
 
     const items = Array.isArray(res.data) ? res.data.map(mapAppointment) : [];
     return {

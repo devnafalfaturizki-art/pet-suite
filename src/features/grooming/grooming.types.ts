@@ -19,6 +19,9 @@ export interface GroomingRecord {
   notes?: string | null;
   photoBeforeUrl?: string | null;
   photoAfterUrl?: string | null;
+  serviceName?: string | null;
+  groomerName?: string | null;
+  petName?: string | null;
   createdAt: string;
 }
 

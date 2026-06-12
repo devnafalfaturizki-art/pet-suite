@@ -3,8 +3,15 @@ import { Plus, HeartPulse, ClipboardList, Save, Activity } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable } from '@/components/common/DataTable';
 import { Button, Card, Input } from '@/components/ui';
+import { useQueryClient } from '@tanstack/react-query';
 import InvoiceReviewModal from '../components/InvoiceReviewModal';
+import { CageGrid } from '../components/CageGrid';
+import { AdmitPetModal } from '../components/AdmitPetModal';
+import { DischargeModal } from '../components/DischargeModal';
 import { useCages, useInpatientRecords, useCreateInpatientRecord } from '../inpatient.hooks';
+import { inpatientService } from '../inpatient.service';
+import type { CartItem } from '@/features/pos/pos.types';
+import type { Cage, InpatientRecord } from '../inpatient.types';
 
 export default function InpatientPage() {
   const [search, setSearch] = useState('');
@@ -16,7 +23,12 @@ export default function InpatientPage() {
   const [admitDate, setAdmitDate] = useState('');
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedCage, setSelectedCage] = useState<Cage | null>(null);
+  const [dischargeRecord, setDischargeRecord] = useState<InpatientRecord | null>(null);
+  const [pendingBill, setPendingBill] = useState<{ items: CartItem[]; total: number } | null>(null);
+  const [isLoadingBill, setIsLoadingBill] = useState(false);
 
+  const qc = useQueryClient();
   const { data: cages = [] } = useCages();
   const { data, isLoading } = useInpatientRecords({ page, pageSize: 12, search, status: status || undefined });
   const createRecord = useCreateInpatientRecord();
@@ -26,6 +38,8 @@ export default function InpatientPage() {
 
   const occupied = items.filter((item) => item.status === 'admitted').length;
   const discharged = items.filter((item) => item.status === 'discharged').length;
+
+  const availableCages = cages.filter((cage) => cage.status === 'available');
 
   async function handleAdmit() {
     await createRecord.mutateAsync({
@@ -42,7 +56,50 @@ export default function InpatientPage() {
     setAdmitDate('');
     setReason('');
     setNotes('');
+    qc.invalidateQueries(['inpatientRecords']);
+    qc.invalidateQueries(['cages']);
   }
+
+  const openAdmitModal = (cage: Cage) => {
+    if (cage.status === 'available') {
+      setSelectedCage(cage);
+    }
+  };
+
+  const closeAdmitModal = () => {
+    setSelectedCage(null);
+  };
+
+  const handleAdmitSuccess = () => {
+    qc.invalidateQueries(['inpatientRecords']);
+    qc.invalidateQueries(['cages']);
+    setSelectedCage(null);
+  };
+
+  const handleOpenDischarge = async (record: InpatientRecord) => {
+    setIsLoadingBill(true);
+    try {
+      const bill = await inpatientService.getInpatientBill(record.id);
+      setPendingBill(bill);
+      setDischargeRecord(record);
+    } catch (err) {
+      setPendingBill({ items: [], total: 0 });
+    } finally {
+      setIsLoadingBill(false);
+    }
+  };
+
+  const closeDischargeModal = () => {
+    setDischargeRecord(null);
+    setPendingBill(null);
+  };
+
+  const handleDischargeSuccess = () => {
+    qc.invalidateQueries(['inpatientRecords']);
+    qc.invalidateQueries(['cages']);
+    setDischargeRecord(null);
+    setPendingBill(null);
+  };
 
   const [reviewInvoiceFor, setReviewInvoiceFor] = useState<string | null>(null);
 
@@ -85,6 +142,19 @@ export default function InpatientPage() {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Ward overview</h2>
+                  <p className="text-sm text-slate-500">Click a cage to admit a new patient.</p>
+                </div>
+                <div className="text-sm text-slate-600">Available cages: {availableCages.length}</div>
+              </div>
+              <CageGrid cages={cages} inpatientRecords={items} onCageClick={openAdmitModal} />
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="grid gap-4 md:grid-cols-[1fr_auto]">
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <Input
@@ -111,17 +181,24 @@ export default function InpatientPage() {
             <div className="mt-6">
               <DataTable
                 columns={[
-                  { key: 'petId', title: 'Pet ID' },
-                  { key: 'cageId', title: 'Cage' },
-                  { key: 'doctorId', title: 'Doctor' },
+                  { key: 'petName', title: 'Pet', render: (record: any) => record.petName ?? record.petId },
+                  { key: 'cageName', title: 'Cage', render: (record: any) => record.cageName ?? record.cageId },
+                  { key: 'doctorName', title: 'Doctor', render: (record: any) => record.doctorName ?? record.admittingDoctorId },
                   { key: 'admitDate', title: 'Admit Date', render: (record: any) => new Date(record.admitDate).toLocaleDateString() },
                   { key: 'status', title: 'Status' },
                   {
                     key: 'actions',
                     title: 'Actions',
                     render: (record: any) => (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setReviewInvoiceFor(record.id); }}>Review Invoice</Button>
+                      <div className="flex flex-wrap gap-2">
+                        {record.status === 'admitted' ? (
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); void handleOpenDischarge(record); }}>
+                            Discharge
+                          </Button>
+                        ) : null}
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setReviewInvoiceFor(record.id); }}>
+                          Review Invoice
+                        </Button>
                       </div>
                     )
                   }
@@ -144,6 +221,9 @@ export default function InpatientPage() {
                 <h2 className="text-lg font-semibold text-slate-900">Admit new pet</h2>
                 <p className="text-sm text-slate-500">Assign a cage and admit a patient for inpatient care.</p>
               </div>
+              {selectedCage ? (
+                <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Admitting to {selectedCage.name}</div>
+              ) : null}
             </div>
             <div className="mt-5 space-y-4">
               <div>
@@ -181,6 +261,15 @@ export default function InpatientPage() {
             </div>
           </Card>
         </div>
+        {selectedCage && <AdmitPetModal cage={selectedCage} onSuccess={handleAdmitSuccess} onClose={closeAdmitModal} />}
+        {dischargeRecord && pendingBill ? (
+          <DischargeModal
+            inpatientRecord={dischargeRecord}
+            pendingBill={pendingBill}
+            onSuccess={handleDischargeSuccess}
+            onClose={closeDischargeModal}
+          />
+        ) : null}
         {reviewInvoiceFor && <InvoiceReviewModal inpatientId={reviewInvoiceFor} onClose={() => setReviewInvoiceFor(null)} />}
       </div>
     </div>

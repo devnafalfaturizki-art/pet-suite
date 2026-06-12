@@ -26,6 +26,9 @@ function mapRecord(record: any): GroomingRecord {
     notes: record.notes,
     photoBeforeUrl: record.photo_before_url,
     photoAfterUrl: record.photo_after_url,
+    serviceName: record.grooming_services?.name ?? null,
+    groomerName: record.profiles?.full_name ?? null,
+    petName: record.pets?.name ?? null,
     createdAt: record.created_at
   };
 }
@@ -39,7 +42,7 @@ export const groomingService = {
 
   async getRecords({ page = 1, pageSize = 12, search, status }: GroomingQueryParams = {}): Promise<{ items: GroomingRecord[]; total: number }> {
     const offset = (page - 1) * pageSize;
-    let query: any = supabase.from('grooming_records').select('id, pet_id, service_id, groomer_id, scheduled_at, completed_at, status, notes, photo_before_url, photo_after_url, created_at', { count: 'exact' }).order('scheduled_at', { ascending: false });
+    let query: any = supabase.from('grooming_records').select('id, pet_id, service_id, groomer_id, scheduled_at, completed_at, status, notes, photo_before_url, photo_after_url, created_at, pets(name), grooming_services(name), profiles(full_name)', { count: 'exact' }).order('scheduled_at', { ascending: false });
     if (status) query = query.eq('status', status);
     if (search) {
       const term = `%${search}%`;

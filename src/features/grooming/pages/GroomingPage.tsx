@@ -3,8 +3,12 @@ import { Plus, Scissors, Sparkles } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable } from '@/components/common/DataTable';
 import { Button, Card, Input } from '@/components/ui';
-import { useGroomingServices, useGroomingRecords, useCreateGroomingService, useCreateGroomingRecord } from '../grooming.hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { useGroomingServices, useGroomingRecords, useCreateGroomingService, useCreateGroomingRecord, useCompleteGrooming } from '../grooming.hooks';
+import { CreateGroomingModal } from '../components/CreateGroomingModal';
+import { CompleteGroomingModal } from '../components/CompleteGroomingModal';
 import { formatCurrency } from '@/lib/utils';
+import type { GroomingRecord } from '../grooming.types';
 
 export default function GroomingPage() {
   const [search, setSearch] = useState('');
@@ -17,11 +21,15 @@ export default function GroomingPage() {
   const [recordServiceId, setRecordServiceId] = useState('');
   const [recordDate, setRecordDate] = useState('');
   const [recordNotes, setRecordNotes] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<GroomingRecord | null>(null);
 
+  const qc = useQueryClient();
   const { data: services = [] } = useGroomingServices();
   const { data, isLoading } = useGroomingRecords({ page, pageSize: 12, search, status: status || undefined });
   const createService = useCreateGroomingService();
   const createRecord = useCreateGroomingRecord();
+  const completeGrooming = useCompleteGrooming();
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -50,6 +58,16 @@ export default function GroomingPage() {
     setRecordDate('');
     setRecordNotes('');
   }
+
+  const handleBookingSuccess = () => {
+    qc.invalidateQueries(['groomingRecords']);
+    setShowCreateModal(false);
+  };
+
+  const handleCompleteSuccess = () => {
+    qc.invalidateQueries(['groomingRecords']);
+    setSelectedRecord(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -80,12 +98,14 @@ export default function GroomingPage() {
                 <p className="text-2xl font-semibold text-slate-900">{total}</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-4 p-5">
-              <Plus className="h-6 w-6 text-slate-500" />
+            <Card className="flex items-center justify-between gap-4 p-5">
               <div>
                 <p className="text-sm text-slate-500">Service options</p>
                 <p className="text-2xl font-semibold text-slate-900">{services.length}</p>
               </div>
+              <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-4 h-4" />
+              </Button>
             </Card>
           </div>
 
@@ -115,10 +135,23 @@ export default function GroomingPage() {
             <div className="mt-6">
               <DataTable
                 columns={[
-                  { key: 'petId', title: 'Pet ID' },
-                  { key: 'serviceId', title: 'Service' },
+                  { key: 'petName', title: 'Pet', render: (record: any) => record.petName ?? record.petId },
+                  { key: 'serviceName', title: 'Service', render: (record: any) => record.serviceName ?? record.serviceId },
                   { key: 'scheduledAt', title: 'Date', render: (record: any) => new Date(record.scheduledAt).toLocaleDateString() },
-                  { key: 'status', title: 'Status' }
+                  { key: 'status', title: 'Status' },
+                  {
+                    key: 'actions',
+                    title: 'Actions',
+                    render: (record: any) => (
+                      <div className="flex gap-2">
+                        {record.status === 'scheduled' ? (
+                          <Button size="sm" variant="outline" onClick={() => setSelectedRecord(record)}>
+                            Complete
+                          </Button>
+                        ) : null}
+                      </div>
+                    )
+                  }
                 ]}
                 data={items}
                 isLoading={isLoading}
@@ -162,7 +195,11 @@ export default function GroomingPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700">Service</label>
-                <select value={recordServiceId} onChange={(event) => setRecordServiceId(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm">
+                <select
+                  value={recordServiceId}
+                  onChange={(event) => setRecordServiceId(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                >
                   <option value="">Select service</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>{service.name} · {formatCurrency(service.price)}</option>
@@ -179,7 +216,12 @@ export default function GroomingPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700">Notes</label>
-                <textarea value={recordNotes} onChange={(event) => setRecordNotes(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm" rows={3} />
+                <textarea
+                  value={recordNotes}
+                  onChange={(event) => setRecordNotes(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm"
+                  rows={3}
+                />
               </div>
               <Button type="button" onClick={handleCreateRecord} disabled={createRecord.isLoading}>
                 <Plus className="w-4 h-4 mr-2" /> Schedule
@@ -188,6 +230,11 @@ export default function GroomingPage() {
           </Card>
         </div>
       </div>
+
+      {showCreateModal && <CreateGroomingModal onSuccess={handleBookingSuccess} onClose={() => setShowCreateModal(false)} />}
+      {selectedRecord && (
+        <CompleteGroomingModal record={selectedRecord} onSuccess={handleCompleteSuccess} onClose={() => setSelectedRecord(null)} />
+      )}
     </div>
   );
 }
