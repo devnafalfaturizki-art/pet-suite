@@ -4,11 +4,11 @@ import { DataTable } from '@/components/common/DataTable';
 import { Card, Badge, Button, Skeleton } from '@/components/ui';
 import { useAuthStore } from '@/stores/auth.store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { useOwnerStats, useWeeklyRevenue, useAppointmentBreakdown, useRecentTransactions, useLowStockItems, useDoctorStats, useStaffStats } from '@/features/dashboard/dashboard.hooks';
 import { usePortalCustomer, usePortalCustomerId, usePortalInvoices, usePortalAppointments, usePortalSummary } from '@/features/portal/portal.hooks';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
-import { TrendingUp, Calendar, Activity, Syringe, AlertTriangle } from 'lucide-react';
+import { TrendingUp, CalendarDays, HeartPulse, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 function SectionSkeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -20,12 +20,12 @@ function SectionSkeleton({ lines = 4 }: { lines?: number }) {
   );
 }
 
-function StatCard({ title, value, description, icon: Icon, isLoading }: { title: string; value: string; description: string; icon?: React.ComponentType<{ className?: string }>; isLoading?: boolean }) {
+function StatCard({ title, value, description, icon: Icon, gradient, isLoading }: { title: string; value: string; description: string; icon?: React.ComponentType<{ className?: string }>; gradient?: string; isLoading?: boolean }) {
   return (
     <Card className="relative overflow-hidden p-6 transition-all duration-200 hover:shadow-card-hover animate-slide-up">
       {Icon && (
-        <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-          <Icon className="h-5 w-5" />
+        <div className={cn('mb-4 flex h-10 w-10 items-center justify-center rounded-xl', gradient ?? 'bg-blue-500')}>
+          <Icon className="h-5 w-5 text-white" />
         </div>
       )}
       <div className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</div>
@@ -33,7 +33,7 @@ function StatCard({ title, value, description, icon: Icon, isLoading }: { title:
         ? <Skeleton className="mt-2 h-9 w-24" />
         : <div className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{value}</div>
       }
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{description}</p>
     </Card>
   );
 }
@@ -67,11 +67,11 @@ function OwnerDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard title="Revenue today" value={formatCurrency(stats?.revenueToday ?? 0)} description="Paid invoice revenue captured so far today." icon={TrendingUp} isLoading={statsQuery.isLoading} />
-        <StatCard title="Appointments today" value={String(stats?.appointmentsToday ?? 0)} description="Scheduled patient visits for today." icon={Calendar} isLoading={statsQuery.isLoading} />
-        <StatCard title="Active inpatients" value={String(stats?.activeInpatients ?? 0)} description="Pets currently admitted in inpatient care." icon={Activity} isLoading={statsQuery.isLoading} />
-        <StatCard title="Pending vaccinations" value={String(stats?.pendingVaccinations ?? 0)} description="Vaccination reminders due soon." icon={Syringe} isLoading={statsQuery.isLoading} />
-        <StatCard title="Low stock alerts" value={String(stats?.lowStockCount ?? 0)} description="Items at or below minimum stock levels." icon={AlertTriangle} isLoading={statsQuery.isLoading} />
+        <StatCard title="Revenue today" value={formatCurrency(stats?.revenueToday ?? 0)} description="Paid invoice revenue captured so far today." icon={TrendingUp} gradient="bg-gradient-to-br from-blue-500 to-blue-600" isLoading={statsQuery.isLoading} />
+        <StatCard title="Appointments today" value={String(stats?.appointmentsToday ?? 0)} description="Scheduled patient visits for today." icon={CalendarDays} gradient="bg-gradient-to-br from-violet-500 to-violet-600" isLoading={statsQuery.isLoading} />
+        <StatCard title="Active inpatients" value={String(stats?.activeInpatients ?? 0)} description="Pets currently admitted in inpatient care." icon={HeartPulse} gradient="bg-gradient-to-br from-amber-500 to-amber-600" isLoading={statsQuery.isLoading} />
+        <StatCard title="Pending vaccinations" value={String(stats?.pendingVaccinations ?? 0)} description="Vaccination reminders due soon." icon={ShieldCheck} gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" isLoading={statsQuery.isLoading} />
+        <StatCard title="Low stock alerts" value={String(stats?.lowStockCount ?? 0)} description="Items at or below minimum stock levels." icon={AlertTriangle} gradient="bg-gradient-to-br from-rose-500 to-rose-600" isLoading={statsQuery.isLoading} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -212,8 +212,8 @@ function DoctorDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Today appointments" value={String(appointmentRows.length)} description="Sessions scheduled for you today." icon={Calendar} isLoading={doctorQuery.isLoading} />
-        <StatCard title="Active inpatients" value={String(doctorStats?.activeInpatients ?? 0)} description="Patients currently in inpatient care." icon={Activity} isLoading={doctorQuery.isLoading} />
+        <StatCard title="Today appointments" value={String(appointmentRows.length)} description="Sessions scheduled for you today." icon={CalendarDays} isLoading={doctorQuery.isLoading} />
+        <StatCard title="Active inpatients" value={String(doctorStats?.activeInpatients ?? 0)} description="Patients currently in inpatient care." icon={HeartPulse} isLoading={doctorQuery.isLoading} />
         <StatCard title="Recent records" value={String(recordRows.length)} description="Latest case notes created." icon={TrendingUp} isLoading={doctorQuery.isLoading} />
         <Card className="space-y-3 p-6">
           <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Next actions</div>
@@ -289,8 +289,8 @@ function StaffDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Today appointments" value={String(appointments.length)} description="Tasks scheduled for your team today." icon={Calendar} isLoading={staffQuery.isLoading} />
-        <StatCard title="Grooming today" value={String(grooming.length)} description="Grooming services set for today." icon={Activity} isLoading={staffQuery.isLoading} />
+        <StatCard title="Today appointments" value={String(appointments.length)} description="Tasks scheduled for your team today." icon={CalendarDays} isLoading={staffQuery.isLoading} />
+        <StatCard title="Grooming today" value={String(grooming.length)} description="Grooming services set for today." icon={HeartPulse} isLoading={staffQuery.isLoading} />
         <StatCard title="Low stock alerts" value={String(lowStock.length)} description="Needed inventory restocks." icon={AlertTriangle} isLoading={staffQuery.isLoading} />
         <Card className="space-y-3 p-6">
           <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Operational overview</div>
@@ -397,8 +397,8 @@ function CustomerDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Your pets" value={String(summary?.petCount ?? 0)} description="Pets currently registered in your account." icon={Activity} isLoading={summaryQuery.isLoading} />
-        <StatCard title="Upcoming visits" value={String(summary?.appointmentCount ?? 0)} description="Future appointments scheduled for you." icon={Calendar} isLoading={summaryQuery.isLoading} />
+        <StatCard title="Your pets" value={String(summary?.petCount ?? 0)} description="Pets currently registered in your account." icon={HeartPulse} isLoading={summaryQuery.isLoading} />
+        <StatCard title="Upcoming visits" value={String(summary?.appointmentCount ?? 0)} description="Future appointments scheduled for you." icon={CalendarDays} isLoading={summaryQuery.isLoading} />
         <StatCard title="Invoices" value={String(summary?.invoiceCount ?? 0)} description="Recent billing records on file." icon={TrendingUp} isLoading={summaryQuery.isLoading} />
         <Card className="space-y-3 p-6">
           <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Account</div>

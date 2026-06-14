@@ -1,6 +1,6 @@
 -- 008_inpatient.sql
 
-create table if not exists cages (
+create table IF NOT EXISTS cages (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   cage_type text,
@@ -9,7 +9,7 @@ create table if not exists cages (
   created_at timestamptz not null default now()
 );
 
-create table if not exists inpatient_records (
+create table IF NOT EXISTS inpatient_records (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   cage_id uuid not null references cages(id) on delete restrict,
@@ -23,7 +23,7 @@ create table if not exists inpatient_records (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists daily_observations (
+create table IF NOT EXISTS daily_observations (
   id uuid primary key default gen_random_uuid(),
   inpatient_record_id uuid not null references inpatient_records(id) on delete cascade,
   temperature numeric(5,2),
@@ -35,7 +35,7 @@ create table if not exists daily_observations (
   observed_at timestamptz not null default now()
 );
 
-create table if not exists inpatient_medication_schedules (
+create table IF NOT EXISTS inpatient_medication_schedules (
   id uuid primary key default gen_random_uuid(),
   inpatient_record_id uuid not null references inpatient_records(id) on delete cascade,
   drug_name text not null,

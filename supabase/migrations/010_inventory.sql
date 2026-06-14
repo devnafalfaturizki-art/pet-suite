@@ -1,12 +1,12 @@
 -- 010_inventory.sql
 
-create table if not exists inventory_categories (
+create table IF NOT EXISTS inventory_categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   created_at timestamptz not null default now()
 );
 
-create table if not exists suppliers (
+create table IF NOT EXISTS suppliers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   contact text,
@@ -15,7 +15,7 @@ create table if not exists suppliers (
   created_at timestamptz not null default now()
 );
 
-create table if not exists inventory_items (
+create table IF NOT EXISTS inventory_items (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   category_id uuid not null references inventory_categories(id) on delete restrict,
@@ -28,7 +28,7 @@ create table if not exists inventory_items (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists inventory_batches (
+create table IF NOT EXISTS inventory_batches (
   id uuid primary key default gen_random_uuid(),
   item_id uuid not null references inventory_items(id) on delete cascade,
   supplier_id uuid references suppliers(id) on delete set null,
@@ -40,7 +40,7 @@ create table if not exists inventory_batches (
   created_by uuid references profiles(id) on delete set null
 );
 
-create table if not exists stock_movements (
+create table IF NOT EXISTS stock_movements (
   id uuid primary key default gen_random_uuid(),
   item_id uuid not null references inventory_items(id) on delete cascade,
   batch_id uuid references inventory_batches(id) on delete set null,

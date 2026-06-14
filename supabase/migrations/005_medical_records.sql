@@ -1,6 +1,6 @@
 -- 005_medical_records.sql
 
-create table if not exists medical_records (
+create table IF NOT EXISTS medical_records (
   id uuid primary key default gen_random_uuid(),
   appointment_id uuid references appointments(id) on delete set null,
   pet_id uuid not null references pets(id) on delete cascade,
@@ -15,7 +15,7 @@ create table if not exists medical_records (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists prescriptions (
+create table IF NOT EXISTS prescriptions (
   id uuid primary key default gen_random_uuid(),
   medical_record_id uuid not null references medical_records(id) on delete cascade,
   drug_name text not null,
@@ -25,7 +25,7 @@ create table if not exists prescriptions (
   created_at timestamptz not null default now()
 );
 
-create table if not exists medical_attachments (
+create table IF NOT EXISTS medical_attachments (
   id uuid primary key default gen_random_uuid(),
   medical_record_id uuid not null references medical_records(id) on delete cascade,
   file_url text not null,

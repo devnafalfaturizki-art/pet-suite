@@ -1,6 +1,6 @@
 -- 017_queue_counter.sql
 
-create table if not exists queue_counters (
+create table IF NOT EXISTS queue_counters (
   date date primary key,
   counter int not null default 0
 );

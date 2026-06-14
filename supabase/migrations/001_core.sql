@@ -2,22 +2,119 @@
 
 create extension if not exists pgcrypto;
 
-create type if not exists user_role_enum as enum ('owner', 'doctor', 'staff', 'customer');
-create type if not exists module_key_enum as enum ('clinic', 'monitoring', 'inpatient', 'grooming', 'petshop', 'inventory', 'accounting', 'website');
-create type if not exists appointment_status_enum as enum ('scheduled', 'confirmed', 'completed', 'cancelled', 'no-show');
-create type if not exists customer_status_enum as enum ('active', 'inactive', 'vip', 'blacklisted');
-create type if not exists cage_status_enum as enum ('available', 'occupied', 'cleaning', 'maintenance');
-create type if not exists payment_method_enum as enum ('cash', 'card', 'bank-transfer', 'e-wallet');
-create type if not exists stock_movement_type_enum as enum ('inbound', 'outbound', 'adjustment');
-create type if not exists notification_provider_enum as enum ('email', 'whatsapp', 'sms');
-create type if not exists account_type_enum as enum ('asset', 'liability', 'equity', 'revenue', 'expense');
-create type if not exists transaction_type_enum as enum ('credit', 'debit');
-create type if not exists invoice_status_enum as enum ('draft', 'paid', 'pending', 'cancelled', 'refunded');
-create type if not exists medical_record_type_enum as enum ('consultation', 'follow-up', 'emergency', 'surgery');
-create type if not exists vaccination_channel_enum as enum ('email', 'whatsapp', 'sms');
-create type if not exists resume_status_enum as enum ('scheduled', 'completed', 'cancelled');
+do $$
+begin
+  create type user_role_enum as enum ('owner', 'doctor', 'staff', 'customer');
+exception when duplicate_object then
+  null;
+end
+$$;
 
-create table if not exists profiles (
+do $$
+begin
+  create type module_key_enum as enum ('clinic', 'monitoring', 'inpatient', 'grooming', 'petshop', 'inventory', 'accounting', 'website');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type appointment_status_enum as enum ('scheduled', 'confirmed', 'completed', 'cancelled', 'no-show');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type customer_status_enum as enum ('active', 'inactive', 'vip', 'blacklisted');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type cage_status_enum as enum ('available', 'occupied', 'cleaning', 'maintenance');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type payment_method_enum as enum ('cash', 'card', 'bank-transfer', 'e-wallet');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type stock_movement_type_enum as enum ('inbound', 'outbound', 'adjustment');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type notification_provider_enum as enum ('email', 'whatsapp', 'sms');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type account_type_enum as enum ('asset', 'liability', 'equity', 'revenue', 'expense');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type transaction_type_enum as enum ('credit', 'debit');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type invoice_status_enum as enum ('draft', 'paid', 'pending', 'cancelled', 'refunded');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type medical_record_type_enum as enum ('consultation', 'follow-up', 'emergency', 'surgery');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type vaccination_channel_enum as enum ('email', 'whatsapp', 'sms');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+do $$
+begin
+  create type resume_status_enum as enum ('scheduled', 'completed', 'cancelled');
+exception when duplicate_object then
+  null;
+end
+$$;
+
+create table IF NOT EXISTS profiles (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   email text not null unique,
@@ -29,7 +126,7 @@ create table if not exists profiles (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists settings (
+create table IF NOT EXISTS settings (
   id uuid primary key default gen_random_uuid(),
   key varchar not null unique,
   value jsonb not null default '{}'::jsonb,
@@ -37,14 +134,14 @@ create table if not exists settings (
   updated_by uuid references profiles(id) on delete set null
 );
 
-create table if not exists modules (
+create table IF NOT EXISTS modules (
   id uuid primary key default gen_random_uuid(),
   key module_key_enum not null unique,
   is_enabled boolean not null default false,
   updated_at timestamptz not null default now()
 );
 
-create table if not exists audit_logs (
+create table IF NOT EXISTS audit_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references profiles(id) on delete set null,
   action varchar not null,
@@ -56,7 +153,7 @@ create table if not exists audit_logs (
   created_at timestamptz not null default now()
 );
 
-create table if not exists notifications_log (
+create table IF NOT EXISTS notifications_log (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references profiles(id) on delete set null,
   channel notification_provider_enum not null,

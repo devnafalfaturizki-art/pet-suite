@@ -2,6 +2,28 @@
 
 A fullstack veterinary clinic and petshop management system built with React, TypeScript, Vite, Supabase, and modern frontend tooling.
 
+## Quick Start
+
+```bash
+git clone <repo>
+cd petcaresuite-main
+npm install          # required before anything else
+cp .env.example .env # fill in your Supabase URL and anon key
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Deploy
+
+Follow supabase/README.md for Supabase setup.
+
+Push to GitHub → import to vercel.com → add env vars → deploy.
+
 ## Setup
 
 1. Clone the repository

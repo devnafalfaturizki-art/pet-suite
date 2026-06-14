@@ -309,7 +309,11 @@ export default function PosPage() {
               <div className="flex justify-between"><span>Change</span><span>{formatCurrency(paymentData.changeAmount)}</span></div>
             </div>
 
-            <Button onClick={checkout} disabled={!cart.items.length || checkoutLoading} className="w-full">
+            <Button
+              onClick={checkout}
+              disabled={!cart.items.length || checkoutLoading}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm transition-all duration-150 hover:from-blue-700 hover:to-blue-800 hover:shadow-card-hover active:scale-95"
+            >
               {checkoutLoading ? 'Processing…' : 'Complete checkout'}
             </Button>
           </Card>

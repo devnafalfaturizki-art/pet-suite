@@ -1,6 +1,6 @@
 -- 014_website.sql
 
-create table if not exists articles (
+create table IF NOT EXISTS articles (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   slug text not null unique,
@@ -14,7 +14,7 @@ create table if not exists articles (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists testimonials (
+create table IF NOT EXISTS testimonials (
   id uuid primary key default gen_random_uuid(),
   customer_name text not null,
   content text not null,
@@ -24,7 +24,7 @@ create table if not exists testimonials (
   created_at timestamptz not null default now()
 );
 
-create table if not exists website_content (
+create table IF NOT EXISTS website_content (
   id uuid primary key default gen_random_uuid(),
   section_key varchar not null unique,
   content jsonb not null,

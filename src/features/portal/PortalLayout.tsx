@@ -49,9 +49,32 @@ export default function PortalLayout() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 animate-fade-in">
+      <main className="mx-auto max-w-6xl px-4 py-8 pb-16 animate-fade-in lg:pb-0">
         <Outlet />
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 border-t border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 lg:hidden">
+        {navItems.slice(0, 5).map((item) => {
+          const isActive = location.pathname === item.to || (item.to !== '/portal' && location.pathname.startsWith(item.to));
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                'flex flex-1 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors',
+                isActive
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 -- 004_appointments.sql
 
-create table if not exists services (
+create table IF NOT EXISTS services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
@@ -11,7 +11,7 @@ create table if not exists services (
   created_at timestamptz not null default now()
 );
 
-create table if not exists doctors (
+create table IF NOT EXISTS doctors (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references profiles(id) on delete cascade,
   specialization text,
@@ -21,7 +21,7 @@ create table if not exists doctors (
   created_at timestamptz not null default now()
 );
 
-create table if not exists doctor_schedules (
+create table IF NOT EXISTS doctor_schedules (
   id uuid primary key default gen_random_uuid(),
   doctor_id uuid not null references doctors(id) on delete cascade,
   day_of_week int not null check (day_of_week between 0 and 6),
@@ -30,7 +30,7 @@ create table if not exists doctor_schedules (
   is_available boolean not null default true
 );
 
-create table if not exists appointments (
+create table IF NOT EXISTS appointments (
   id uuid primary key default gen_random_uuid(),
   customer_id uuid not null references customers(id) on delete cascade,
   pet_id uuid not null references pets(id) on delete cascade,

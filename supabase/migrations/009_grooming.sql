@@ -1,6 +1,6 @@
 -- 009_grooming.sql
 
-create table if not exists grooming_services (
+create table IF NOT EXISTS grooming_services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
@@ -10,7 +10,7 @@ create table if not exists grooming_services (
   created_at timestamptz not null default now()
 );
 
-create table if not exists grooming_records (
+create table IF NOT EXISTS grooming_records (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   service_id uuid not null references grooming_services(id) on delete restrict,

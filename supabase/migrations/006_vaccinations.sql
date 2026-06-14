@@ -1,6 +1,6 @@
 -- 006_vaccinations.sql
 
-create table if not exists vaccines (
+create table IF NOT EXISTS vaccines (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
@@ -9,7 +9,7 @@ create table if not exists vaccines (
   created_at timestamptz not null default now()
 );
 
-create table if not exists vaccination_records (
+create table IF NOT EXISTS vaccination_records (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   vaccine_id uuid not null references vaccines(id) on delete restrict,
@@ -22,7 +22,7 @@ create table if not exists vaccination_records (
   created_at timestamptz not null default now()
 );
 
-create table if not exists vaccination_reminders (
+create table IF NOT EXISTS vaccination_reminders (
   id uuid primary key default gen_random_uuid(),
   vaccination_record_id uuid not null references vaccination_records(id) on delete cascade,
   remind_at timestamptz not null,

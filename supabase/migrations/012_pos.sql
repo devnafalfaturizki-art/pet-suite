@@ -1,6 +1,6 @@
 -- 012_pos.sql
 
-create table if not exists invoices (
+create table IF NOT EXISTS invoices (
   id uuid primary key default gen_random_uuid(),
   invoice_number varchar not null unique,
   customer_id uuid references customers(id) on delete set null,
@@ -21,7 +21,7 @@ create table if not exists invoices (
   paid_at timestamptz
 );
 
-create table if not exists invoice_items (
+create table IF NOT EXISTS invoice_items (
   id uuid primary key default gen_random_uuid(),
   invoice_id uuid not null references invoices(id) on delete cascade,
   item_type varchar not null,
@@ -34,7 +34,7 @@ create table if not exists invoice_items (
   created_at timestamptz not null default now()
 );
 
-create table if not exists refunds (
+create table IF NOT EXISTS refunds (
   id uuid primary key default gen_random_uuid(),
   invoice_id uuid not null references invoices(id) on delete cascade,
   amount numeric(12,2) not null,

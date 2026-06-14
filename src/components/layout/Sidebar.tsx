@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PawPrint } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModuleStore } from '@/stores/module.store';
 import { useUIStore } from '@/stores/ui.store';
@@ -42,21 +42,28 @@ export function Sidebar({ activePath, onNavigate, isMobileOpen = false, onClose,
         isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}
     >
-      <div className="flex items-center justify-between gap-3 pb-4">
-        {!isCollapsed && (
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-            Navigation
+      <div className="space-y-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div className="flex items-center gap-3 px-2 py-4">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700">
+            <PawPrint className="h-4 w-4 text-white" />
           </div>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleCollapse ?? collapseSidebar}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn(isCollapsed && 'mx-auto')}
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
+          {!isCollapsed && (
+            <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-base font-bold text-transparent dark:from-blue-400 dark:to-blue-500">
+              PetCare Suite
+            </span>
+          )}
+        </div>
+        <div className="flex justify-end px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse ?? collapseSidebar}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(isCollapsed && 'mx-auto')}
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
       <div className="flex-1 space-y-6">
         {Object.entries(sections).map(([section, sectionItems]) => (

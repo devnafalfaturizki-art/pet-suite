@@ -1,19 +1,19 @@
 -- 011_petshop.sql
 
-create table if not exists product_categories (
+create table IF NOT EXISTS product_categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
   created_at timestamptz not null default now()
 );
 
-create table if not exists brands (
+create table IF NOT EXISTS brands (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
   created_at timestamptz not null default now()
 );
 
-create table if not exists products (
+create table IF NOT EXISTS products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
@@ -28,7 +28,7 @@ create table if not exists products (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists product_variants (
+create table IF NOT EXISTS product_variants (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references products(id) on delete cascade,
   name text not null,
@@ -40,7 +40,7 @@ create table if not exists product_variants (
   created_at timestamptz not null default now()
 );
 
-create table if not exists product_images (
+create table IF NOT EXISTS product_images (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references products(id) on delete cascade,
   url text not null,

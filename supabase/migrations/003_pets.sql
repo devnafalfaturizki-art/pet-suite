@@ -1,12 +1,12 @@
 -- 003_pets.sql
 
-create table if not exists species (
+create table IF NOT EXISTS species (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
   created_at timestamptz not null default now()
 );
 
-create table if not exists breeds (
+create table IF NOT EXISTS breeds (
   id uuid primary key default gen_random_uuid(),
   species_id uuid not null references species(id) on delete cascade,
   name text not null,
@@ -14,7 +14,7 @@ create table if not exists breeds (
   unique(species_id, name)
 );
 
-create table if not exists pets (
+create table IF NOT EXISTS pets (
   id uuid primary key default gen_random_uuid(),
   customer_id uuid not null references customers(id) on delete cascade,
   name text not null,

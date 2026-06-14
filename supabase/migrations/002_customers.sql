@@ -1,6 +1,6 @@
 -- 002_customers.sql
 
-create table if not exists customers (
+create table IF NOT EXISTS customers (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid references profiles(id) on delete set null,
   full_name text not null,

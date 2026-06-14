@@ -10,9 +10,9 @@ interface CageGridProps {
 }
 
 const statusStyles: Record<string, string> = {
-  available: 'border-emerald-400 bg-emerald-50',
-  occupied: 'border-amber-400 bg-amber-50',
-  maintenance: 'border-slate-400 bg-slate-50'
+  available: 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30',
+  occupied: 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30',
+  maintenance: 'border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800 opacity-60'
 };
 
 export function CageGrid({ cages, inpatientRecords, onCageClick }: CageGridProps) {
@@ -26,7 +26,7 @@ export function CageGrid({ cages, inpatientRecords, onCageClick }: CageGridProps
         const card = (
           <div
             className={cn(
-              'rounded-3xl border p-5 shadow-sm transition hover:shadow-md',
+              'rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover',
               statusClass,
               isClickable ? 'cursor-pointer' : 'opacity-80'
             )}

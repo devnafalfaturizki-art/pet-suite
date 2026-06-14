@@ -1,6 +1,6 @@
 -- 007_monitoring.sql
 
-create table if not exists weight_records (
+create table IF NOT EXISTS weight_records (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   weight numeric(8,2) not null,
@@ -9,7 +9,7 @@ create table if not exists weight_records (
   notes text
 );
 
-create table if not exists medication_schedules (
+create table IF NOT EXISTS medication_schedules (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   medical_record_id uuid references medical_records(id) on delete set null,
@@ -23,7 +23,7 @@ create table if not exists medication_schedules (
   created_at timestamptz not null default now()
 );
 
-create table if not exists medication_logs (
+create table IF NOT EXISTS medication_logs (
   id uuid primary key default gen_random_uuid(),
   medication_schedule_id uuid not null references medication_schedules(id) on delete cascade,
   taken_at timestamptz not null,
@@ -32,7 +32,7 @@ create table if not exists medication_logs (
   logged_by uuid references profiles(id) on delete set null
 );
 
-create table if not exists recovery_notes (
+create table IF NOT EXISTS recovery_notes (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   medical_record_id uuid not null references medical_records(id) on delete cascade,
@@ -42,7 +42,7 @@ create table if not exists recovery_notes (
   recorded_by uuid references profiles(id) on delete set null
 );
 
-create table if not exists owner_uploads (
+create table IF NOT EXISTS owner_uploads (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references pets(id) on delete cascade,
   customer_id uuid not null references customers(id) on delete cascade,

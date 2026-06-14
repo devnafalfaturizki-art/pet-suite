@@ -1,6 +1,6 @@
 -- 015_queue.sql
 
-create table if not exists queue_counters (
+create table IF NOT EXISTS queue_counters (
   queue_date date primary key,
   last_number int not null default 0,
   updated_at timestamptz not null default now()
@@ -24,7 +24,8 @@ begin
 
     begin
       insert into queue_counters (queue_date, last_number, updated_at)
-      values (generate_queue_number.queue_date, 1, now());
+      values (generate_queue_number.queue_date, 1, now())
+      on conflict (queue_date) do nothing;
       return 1;
     exception when unique_violation then
       null;

@@ -1,6 +1,6 @@
 -- 013_accounting.sql
 
-create table if not exists accounts (
+create table IF NOT EXISTS accounts (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   type account_type_enum not null,
@@ -9,7 +9,7 @@ create table if not exists accounts (
   created_at timestamptz not null default now()
 );
 
-create table if not exists transactions (
+create table IF NOT EXISTS transactions (
   id uuid primary key default gen_random_uuid(),
   account_id uuid not null references accounts(id) on delete cascade,
   invoice_id uuid references invoices(id) on delete set null,
