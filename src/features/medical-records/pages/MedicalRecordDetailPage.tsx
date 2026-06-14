@@ -181,7 +181,7 @@ export default function MedicalRecordDetailPage() {
                           </div>
                           <div className="flex items-center justify-between gap-3 text-sm text-slate-600">
                             <div>{item.dosage}</div>
-                            <Button type="button" variant="danger" onClick={async () => {
+                            <Button type="button" variant="destructive" onClick={async () => {
                                 try {
                                   await removePrescription.mutateAsync({ id: item.id, recordId: id as string });
                                   toast.success('Prescription removed');
@@ -221,7 +221,7 @@ export default function MedicalRecordDetailPage() {
                           <p className="text-sm font-semibold">{attachment.filename}</p>
                           <a href={attachment.url} className="text-sm text-slate-600 hover:text-slate-900">Open file</a>
                         </div>
-                        <Button type="button" variant="danger" onClick={async () => {
+                        <Button type="button" variant="destructive" onClick={async () => {
                             try {
                               await removeAttachment.mutateAsync({ id: attachment.id, recordId: id as string });
                               toast.success('Attachment removed');

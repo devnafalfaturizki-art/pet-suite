@@ -1,1 +1,0 @@
-import{y as o}from"./vendor-react-DjxdTjmZ.js";function i(){return{success:(r,s)=>o.success(r,s),error:(r,s)=>o.error(r,s),info:(r,s)=>o(r,{...s,icon:"ℹ️"}),promise:(r,s,e)=>o.promise(r,s,e)}}export{i as u};

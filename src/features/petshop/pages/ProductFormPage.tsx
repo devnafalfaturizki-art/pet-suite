@@ -223,7 +223,7 @@ export default function ProductFormPage() {
                   <Input type="number" value={variant.stock} onChange={(event) => updateVariant(index, 'stock', Number(event.target.value))} />
                 </div>
                 <div className="md:col-span-2 flex justify-end">
-                  <Button type="button" variant="danger" onClick={() => removeVariant(index)}>
+                  <Button type="button" variant="destructive" onClick={() => removeVariant(index)}>
                     <Trash2 className="w-4 h-4 mr-2" /> Remove
                   </Button>
                 </div>

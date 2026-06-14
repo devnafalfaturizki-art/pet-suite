@@ -121,16 +121,22 @@ export const accountingService = {
     if (expErr) handleSupabaseError(expErr);
     const expenses = (expenseData || []).reduce((s: number, r: any) => s + Number(r.amount), 0);
 
-    const { data: breakdownData, error: brErr } = await supabase.from('transactions').select('account_id, type, sum(amount) as amount').gte('transaction_date', start).lte('transaction_date', end).group('account_id, type');
+    const { data: breakdownData, error: brErr } = await supabase.from('transactions').select('account_id, type, amount').gte('transaction_date', start).lte('transaction_date', end);
     if (brErr) handleSupabaseError(brErr);
 
-    const breakdown: Array<{ accountName: string; type: 'debit' | 'credit'; amount: number }> = [];
+    const breakdownMap = new Map<string, { accountName: string; type: 'debit' | 'credit'; amount: number }>();
     if (Array.isArray(breakdownData)) {
       for (const row of breakdownData) {
-        const { data: acc } = await supabase.from('accounts').select('name').eq('id', row.account_id).single();
-        breakdown.push({ accountName: acc?.name || 'Unknown', type: row.type, amount: Number(row.amount) });
+        const key = `${row.account_id}-${row.type}`;
+        if (!breakdownMap.has(key)) {
+          const { data: acc } = await supabase.from('accounts').select('name').eq('id', row.account_id).single();
+          breakdownMap.set(key, { accountName: acc?.name || 'Unknown', type: row.type, amount: 0 });
+        }
+        const entry = breakdownMap.get(key)!;
+        entry.amount += Number(row.amount);
       }
     }
+    const breakdown = Array.from(breakdownMap.values());
 
     return { income, expenses, netProfit: income - expenses, breakdown };
   },

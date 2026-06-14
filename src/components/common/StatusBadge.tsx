@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui';
 
 interface StatusBadgeProps {
   value: string;
-  variantMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'danger' }>;
+  variantMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }>;
 }
 
 export function StatusBadge({ value, variantMap }: StatusBadgeProps) {

@@ -270,7 +270,7 @@ export default function CreateMedicalRecordPage() {
                 />
               </div>
               <div className="md:col-span-2 flex justify-end">
-                <Button type="button" variant="danger" onClick={() => removePrescription(index)}>
+                <Button type="button" variant="destructive" onClick={() => removePrescription(index)}>
                   Remove
                 </Button>
               </div>

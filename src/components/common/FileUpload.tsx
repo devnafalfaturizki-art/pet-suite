@@ -61,11 +61,11 @@ export function FileUpload({
       }
 
       const { data, error: urlError } = await supabase.storage.from(bucket).createSignedUrl(filePath, 60);
-      if (urlError || !data?.signedURL) {
+      if (urlError || !data?.signedUrl) {
         throw urlError ?? new Error('Unable to generate file URL');
       }
 
-      onUpload?.(data.signedURL);
+      onUpload?.(data.signedUrl);
     } catch (error) {
       const normalizedError = error instanceof Error ? error : new Error('Unable to upload file');
       onError?.(normalizedError);

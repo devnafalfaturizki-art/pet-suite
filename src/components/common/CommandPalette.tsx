@@ -20,6 +20,11 @@ interface SearchItem {
   subtitle?: string;
 }
 
+interface PageResult {
+  label: string;
+  path: string;
+}
+
 export function CommandPalette({ open, onClose, routes }: CommandPaletteProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -37,7 +42,7 @@ export function CommandPalette({ open, onClose, routes }: CommandPaletteProps) {
   const filteredPages = availablePages;
 
   const results = useMemo(() => {
-    const pageItems = filteredPages.map((page) => ({ label: page.label, path: page.path }));
+    const pageItems: SearchItem[] = filteredPages.map((page) => ({ label: page.label, path: page.path }));
     return [...pageItems, ...remoteResults];
   }, [filteredPages, remoteResults]);
 

@@ -1,7 +1,8 @@
-export * from './CommandPalette';
-export * from './ConfirmDialog';
-export * from './DataTable';
-export * from './EmptyState';
-export * from './FileUpload';
-export * from './PageHeader';
-export * from './StatusBadge';
+export { CommandPalette } from './CommandPalette';
+export { ConfirmDialog } from './ConfirmDialog';
+export { DataTable } from './DataTable';
+export { EmptyState } from './EmptyState';
+export { FileUpload } from './FileUpload';
+export { PageHeader } from './PageHeader';
+export { StatusBadge } from './StatusBadge';
+export { default as PageSkeleton } from './PageSkeleton';

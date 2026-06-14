@@ -17,11 +17,11 @@ export default function MonitoringPage() {
 
   const columns = useMemo(
     () => [
-      { key: 'date', title: 'Date', render: (record: any) => new Date(record.date).toLocaleDateString() },
-      { key: 'petId', title: 'Pet ID' },
-      { key: 'weightKg', title: 'Weight (kg)' },
-      { key: 'medicationPlan', title: 'Medication Plan', render: (record: any) => record.medicationPlan || 'No notes' },
-      { key: 'nextCheck', title: 'Next Check', render: (record: any) => record.nextCheck ? new Date(record.nextCheck).toLocaleDateString() : 'None' }
+      { key: 'date', header: 'Date', render: (record: any) => new Date(record.date).toLocaleDateString() },
+      { key: 'petId', header: 'Pet ID' },
+      { key: 'weightKg', header: 'Weight (kg)' },
+      { key: 'medicationPlan', header: 'Medication Plan', render: (record: any) => record.medicationPlan || 'No notes' },
+      { key: 'nextCheck', header: 'Next Check', render: (record: any) => record.nextCheck ? new Date(record.nextCheck).toLocaleDateString() : 'None' }
     ],
     []
   );

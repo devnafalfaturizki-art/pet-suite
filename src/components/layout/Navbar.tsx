@@ -48,6 +48,7 @@ export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
     let isMounted = true;
 
     async function loadNotifications() {
+      if (!user) return;
       setIsLoadingNotifications(true);
       const { data, error } = await supabase
         .from('notifications_log')
@@ -74,7 +75,8 @@ export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
             return;
           }
 
-          setNotifications((current) => [{ ...newRecord, isRead: false }, ...current].slice(0, 5));
+          const typedRecord = newRecord as NotificationItem;
+          setNotifications((current) => [{ ...typedRecord, isRead: false }, ...current].slice(0, 5));
         }
       )
       .subscribe();

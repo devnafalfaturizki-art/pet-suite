@@ -193,14 +193,14 @@ export default function InpatientPage() {
             <div className="mt-6">
               <DataTable
                 columns={[
-                  { key: 'petName', title: 'Pet', render: (record: any) => record.petName ?? record.petId },
-                  { key: 'cageName', title: 'Cage', render: (record: any) => record.cageName ?? record.cageId },
-                  { key: 'doctorName', title: 'Doctor', render: (record: any) => record.doctorName ?? record.admittingDoctorId },
-                  { key: 'admitDate', title: 'Admit Date', render: (record: any) => new Date(record.admitDate).toLocaleDateString() },
-                  { key: 'status', title: 'Status' },
+                  { key: 'petName', header: 'Pet', render: (record: any) => record.petName ?? record.petId },
+                  { key: 'cageName', header: 'Cage', render: (record: any) => record.cageName ?? record.cageId },
+                  { key: 'doctorName', header: 'Doctor', render: (record: any) => record.doctorName ?? record.admittingDoctorId },
+                  { key: 'admitDate', header: 'Admit Date', render: (record: any) => new Date(record.admitDate).toLocaleDateString() },
+                  { key: 'status', header: 'Status' },
                   {
                     key: 'actions',
-                    title: 'Actions',
+                    header: 'Actions',
                     render: (record: any) => (
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/staff/inpatient/${record.id}`); }}>

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Check, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Check, RefreshCw , Loader2} from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button, Card, Input, Textarea, Badge, Skeleton, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Select } from '@/components/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState } from '@/components/common/EmptyState';
-import { PageSkeleton } from '@/components/common/PageSkeleton';
+import PageSkeleton from '@/components/common/PageSkeleton';
 import { DischargeModal } from '../components/DischargeModal';
 import { useInpatientRecord, useObservations, useMedicationSchedules, useInpatientBill, useAddDailyObservation, useAddInpatientMedication, useMarkMedicationGiven, useUpdateInpatientStatus } from '../inpatient.hooks';
 import { inpatientService } from '../inpatient.service';
@@ -47,7 +47,7 @@ export default function InpatientDetailPage() {
   const [pendingBill, setPendingBill] = useState<{ items: CartItem[]; total: number } | null>(null);
 
   if (recordLoading) return <PageSkeleton />;
-  if (!record) return <EmptyState title="Record not found" description="The inpatient record could not be found." />;
+  if (!record) return <EmptyState icon={Loader2} title="Record not found" description="The inpatient record could not be found." />;
 
   const daysAdmitted = Math.ceil((Date.now() - new Date(record.admitDate).getTime()) / 86400000);
 
@@ -260,7 +260,7 @@ export default function InpatientDetailPage() {
               ))}
             </div>
           ) : observations.length === 0 ? (
-            <EmptyState title="No observations" description="No daily observations recorded yet." />
+            <EmptyState icon={Loader2} title="No observations" description="No daily observations recorded yet." />
           ) : (
             <div className="space-y-4">
               {observations.map((obs) => (
@@ -309,7 +309,7 @@ export default function InpatientDetailPage() {
               ))}
             </div>
           ) : medications.length === 0 ? (
-            <EmptyState title="No medications" description="No medications scheduled yet." />
+            <EmptyState icon={Loader2} title="No medications" description="No medications scheduled yet." />
           ) : (
             <div className="space-y-4">
               {medications.map((med) => (
@@ -418,7 +418,7 @@ export default function InpatientDetailPage() {
               <p className="mt-4 text-sm text-slate-500">Final amount due at discharge.</p>
             </Card>
           ) : (
-            <EmptyState title="No billing items" description="No billing items have been added yet." />
+            <EmptyState icon={Loader2} title="No billing items" description="No billing items have been added yet." />
           )}
         </TabsContent>
 
@@ -456,7 +456,7 @@ export default function InpatientDetailPage() {
               </div>
             </Card>
           ) : (
-            <EmptyState title="No report data" description="No observations recorded yet to display in the report." />
+            <EmptyState icon={Loader2} title="No report data" description="No observations recorded yet to display in the report." />
           )}
         </TabsContent>
       </Tabs>

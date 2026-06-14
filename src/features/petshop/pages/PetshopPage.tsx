@@ -140,11 +140,11 @@ export default function PetshopPage() {
             <div className="mt-6">
               <DataTable
                 columns={[
-                  { key: 'name', title: 'Product' },
-                  { key: 'sku', title: 'SKU' },
-                  { key: 'brand', title: 'Brand', render: (record: any) => brands.find((brand) => brand.id === record.brandId)?.name ?? record.brandId },
-                  { key: 'price', title: 'Base price', render: (record: any) => formatCurrency(record.basePrice) },
-                  { key: 'variants', title: 'Variants', render: (record: any) => record.variants.length }
+                  { key: 'name', header: 'Product' },
+                  { key: 'sku', header: 'SKU' },
+                  { key: 'brand', header: 'Brand', render: (record: any) => brands.find((brand) => brand.id === record.brandId)?.name ?? record.brandId },
+                  { key: 'price', header: 'Base price', render: (record: any) => formatCurrency(record.basePrice) },
+                  { key: 'variants', header: 'Variants', render: (record: any) => record.variants.length }
                 ]}
                 data={items}
                 isLoading={isLoading}

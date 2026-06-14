@@ -149,11 +149,15 @@ export const dashboardService = {
       .select('status, id', { count: 'exact' })
       .gte('appointment_date', `${year}-${String(month).padStart(2, '0')}-01`)
       .lt('appointment_date', `${year}-${String(month).padStart(2, '0')}-31`)
-      .group('status');
+      .order('status');
 
     if (error) handleSupabaseError(error);
 
-    return (data || []).map((row: any) => ({ status: row.status, count: row.count ?? 0 }));
+    const counts: Record<string, number> = {};
+    (data || []).forEach((row: any) => {
+      counts[row.status] = (counts[row.status] || 0) + 1;
+    });
+    return Object.entries(counts).map(([status, count]) => ({ status, count }));
   },
 
   async getRecentTransactions(limit = 5): Promise<RecentTransaction[]> {

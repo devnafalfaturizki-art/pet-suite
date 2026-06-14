@@ -208,11 +208,11 @@ export const portalService = {
 
     const { data: signedUrlData, error: urlError } = await supabase.storage.from('owner-uploads').createSignedUrl(filePath, 60 * 60);
     if (urlError) handleSupabaseError(urlError);
-    if (!signedUrlData?.signedURL) throw new AppError('Unable to generate upload URL', 'UPLOAD_FAILED');
+    if (!signedUrlData?.signedUrl) throw new AppError('Unable to generate upload URL', 'UPLOAD_FAILED');
 
     const { data, error } = await supabase
       .from('owner_uploads')
-      .insert({ pet_id: petId, customer_id: customerCheck.data.id, photo_url: signedUrlData.signedURL, note })
+      .insert({ pet_id: petId, customer_id: customerCheck.data.id, photo_url: signedUrlData.signedUrl, note })
       .select()
       .single();
 

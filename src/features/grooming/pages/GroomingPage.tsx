@@ -212,7 +212,7 @@ export default function GroomingPage() {
             </div>
           ) : todayCards.length === 0 ? (
             <EmptyState
-              icon={<Scissors className="h-12 w-12 text-slate-300" />}
+              icon={Scissors}
               title="No grooming sessions today"
               description="No grooming sessions scheduled for today."
             />
@@ -306,13 +306,13 @@ export default function GroomingPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <DataTable
               columns={[
-                { key: 'petName', title: 'Pet', render: (record: any) => record.petName ?? record.petId },
-                { key: 'customerName', title: 'Customer', render: (record: any) => record.customerName ?? '-' },
-                { key: 'serviceName', title: 'Service', render: (record: any) => record.serviceName ?? record.serviceId },
-                { key: 'scheduledAt', title: 'Date', render: (record: any) => new Date(record.scheduledAt).toLocaleString() },
+                { key: 'petName', header: 'Pet', render: (record: any) => record.petName ?? record.petId },
+                { key: 'customerName', header: 'Customer', render: (record: any) => record.customerName ?? '-' },
+                { key: 'serviceName', header: 'Service', render: (record: any) => record.serviceName ?? record.serviceId },
+                { key: 'scheduledAt', header: 'Date', render: (record: any) => new Date(record.scheduledAt).toLocaleString() },
                 {
                   key: 'status',
-                  title: 'Status',
+                  header: 'Status',
                   render: (record: any) => (
                     <Badge
                       variant={
@@ -333,7 +333,7 @@ export default function GroomingPage() {
                 },
                 {
                   key: 'actions',
-                  title: 'Actions',
+                  header: 'Actions',
                   render: (record: any) => (
                     <div className="flex gap-2">
                       {record.status === 'in-progress' && (
@@ -402,13 +402,13 @@ export default function GroomingPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <DataTable
               columns={[
-                { key: 'name', title: 'Name' },
-                { key: 'description', title: 'Description', render: (record: any) => record.description ?? '-' },
-                { key: 'price', title: 'Price', render: (record: any) => formatCurrency(record.price) },
-                { key: 'durationMinutes', title: 'Duration', render: (record: any) => `${record.durationMinutes} min` },
+                { key: 'name', header: 'Name' },
+                { key: 'description', header: 'Description', render: (record: any) => record.description ?? '-' },
+                { key: 'price', header: 'Price', render: (record: any) => formatCurrency(record.price) },
+                { key: 'durationMinutes', header: 'Duration', render: (record: any) => `${record.durationMinutes} min` },
                 {
                   key: 'isActive',
-                  title: 'Active',
+                  header: 'Active',
                   render: (record: any) => (
                     <Switch
                       checked={record.isActive}
@@ -418,7 +418,7 @@ export default function GroomingPage() {
                 },
                 {
                   key: 'actions',
-                  title: 'Actions',
+                  header: 'Actions',
                   render: (record: any) => (
                     <Button size="sm" variant="outline" onClick={() => handleEditService(record)}>
                       Edit
@@ -475,7 +475,7 @@ export default function GroomingPage() {
         title="Cancel grooming"
         description={`Are you sure you want to cancel this grooming session for ${cancelRecord?.petName ?? cancelRecord?.petId}?`}
         onConfirm={handleCancelGrooming}
-        variant="danger"
+        variant="destructive"
       />
     </div>
   );

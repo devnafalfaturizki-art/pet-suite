@@ -81,7 +81,7 @@ export default function PortalAppointmentsPage() {
         description="Are you sure you want to cancel this appointment? This action cannot be undone."
         onConfirm={doConfirmCancel}
         isLoading={cancelMutation.isLoading}
-        variant="danger"
+        variant="destructive"
       />
     </div>
   );

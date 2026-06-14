@@ -6,6 +6,7 @@ import { useInventoryStats } from '../reports.hooks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function InventoryReportsPage() {
   useDocumentTitle('Inventory Reports');
@@ -91,7 +92,7 @@ export default function InventoryReportsPage() {
             </ResponsiveContainer>
           </div>
         ) : (
-          <EmptyState title="No stock value data" description="No category value data is available." />
+          <EmptyState icon={Loader2} title="No stock value data" description="No category value data is available." />
         )}
       </Card>
     </div>

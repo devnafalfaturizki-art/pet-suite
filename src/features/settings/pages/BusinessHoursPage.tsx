@@ -78,7 +78,7 @@ export default function BusinessHoursPage() {
               <div key={`${holiday.date}-${index}`} className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 lg:grid-cols-[180px,1fr,120px]">
                 <Input type="date" value={holiday.date} onChange={(event) => updateHoliday(index, { date: event.target.value })} />
                 <Input value={holiday.label} placeholder="Holiday name" onChange={(event) => updateHoliday(index, { label: event.target.value })} />
-                <Button variant="danger" onClick={() => setSettings((current) => ({ ...current, holidays: current.holidays.filter((_, idx) => idx !== index) }))}>
+                <Button variant="destructive" onClick={() => setSettings((current) => ({ ...current, holidays: current.holidays.filter((_, idx) => idx !== index) }))}>
                   Remove
                 </Button>
               </div>

@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Button, Card, Input, Select, Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui';
 import { DataTable } from '@/components/common/DataTable';
 import { formatCurrency } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAccounts, useTransactions, useCreateTransaction, useIncomeByPeriod, useExpenseByPeriod, useProfitLoss, useCashFlow } from '../accounting.hooks';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
@@ -113,11 +114,11 @@ export default function AccountingPage() {
                 <div className="mt-4">
                   <DataTable
                     columns={[
-                      { key: 'transactionDate', title: 'Date' },
-                      { key: 'accountName', title: 'Account' },
-                      { key: 'type', title: 'Type' },
-                      { key: 'amount', title: 'Amount', render: (r: any) => formatCurrency(r.amount) },
-                      { key: 'description', title: 'Description' }
+                      { key: 'transactionDate', header: 'Date' },
+                      { key: 'accountName', header: 'Account' },
+                      { key: 'type', header: 'Type' },
+                      { key: 'amount', header: 'Amount', render: (r: any) => formatCurrency(r.amount) },
+                      { key: 'description', header: 'Description' }
                     ]}
                     data={recentTx}
                     isLoading={txQ.isLoading}
@@ -169,7 +170,7 @@ export default function AccountingPage() {
             </div>
             <div className="mt-4">
               <DataTable
-                columns={[{ key: 'transactionDate', title: 'Date' }, { key: 'accountName', title: 'Account' }, { key: 'description', title: 'Description' }, { key: 'amount', title: 'Amount', render: (r: any) => formatCurrency(r.amount) } ]}
+                columns={[{ key: 'transactionDate', header: 'Date' }, { key: 'accountName', header: 'Account' }, { key: 'description', header: 'Description' }, { key: 'amount', header: 'Amount', render: (r: any) => formatCurrency(r.amount) } ]}
                 data={(txQ.data?.items || []).filter((t: any) => t.type === 'credit')}
                 isLoading={txQ.isLoading}
               />
@@ -186,7 +187,7 @@ export default function AccountingPage() {
             </div>
             <div className="mt-4">
               <DataTable
-                columns={[{ key: 'transactionDate', title: 'Date' }, { key: 'accountName', title: 'Account' }, { key: 'description', title: 'Description' }, { key: 'amount', title: 'Amount', render: (r: any) => formatCurrency(r.amount) } ]}
+                columns={[{ key: 'transactionDate', header: 'Date' }, { key: 'accountName', header: 'Account' }, { key: 'description', header: 'Description' }, { key: 'amount', header: 'Amount', render: (r: any) => formatCurrency(r.amount) } ]}
                 data={(txQ.data?.items || []).filter((t: any) => t.type === 'debit')}
                 isLoading={txQ.isLoading}
               />
@@ -198,7 +199,7 @@ export default function AccountingPage() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold">Accounts</h3>
             <div className="mt-4">
-              <DataTable columns={[{ key: 'name', title: 'Name' }, { key: 'type', title: 'Type' }, { key: 'description', title: 'Description' } ]} data={accountsQ.data || []} isLoading={accountsQ.isLoading} />
+              <DataTable columns={[{ key: 'name', header: 'Name' }, { key: 'type', header: 'Type' }, { key: 'description', header: 'Description' } ]} data={accountsQ.data || []} isLoading={accountsQ.isLoading} />
             </div>
           </Card>
         </TabsContent>

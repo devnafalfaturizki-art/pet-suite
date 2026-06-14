@@ -8,7 +8,7 @@ import { Button, Input } from '@/components/ui';
 
 export default function CustomersPage() {
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | 'active' | 'inactive' | 'banned'>('all');
+  const [status, setStatus] = useState<'all' | 'active' | 'inactive' | 'blacklisted'>('all');
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useCustomers({ page, pageSize: 10, search, status });
@@ -51,7 +51,7 @@ export default function CustomersPage() {
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
-          <option value="banned">Banned</option>
+          <option value="blacklisted">Banned</option>
         </select>
       </div>
 

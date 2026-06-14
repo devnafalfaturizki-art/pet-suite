@@ -64,7 +64,7 @@ export default function ClinicalReportsPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <EmptyState title="No diagnoses" description="No diagnosis data found for this date range." />
+            <EmptyState icon={Loader2} title="No diagnoses" description="No diagnosis data found for this date range." />
           )}
         </Card>
 
@@ -86,7 +86,7 @@ export default function ClinicalReportsPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <EmptyState title="No record types" description="No clinical record breakdown available for this date range." />
+            <EmptyState icon={Loader2} title="No record types" description="No clinical record breakdown available for this date range." />
           )}
         </Card>
       </div>

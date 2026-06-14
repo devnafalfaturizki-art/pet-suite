@@ -17,11 +17,11 @@ export default function VaccinationsPage() {
 
   const columns = useMemo(
     () => [
-      { key: 'dateAdministered', title: 'Date', render: (record: any) => new Date(record.dateAdministered).toLocaleDateString() },
-      { key: 'petId', title: 'Pet ID' },
-      { key: 'vaccineName', title: 'Vaccine' },
-      { key: 'nextDue', title: 'Next Due', render: (record: any) => record.nextDue ? new Date(record.nextDue).toLocaleDateString() : 'N/A' },
-      { key: 'veterinarianId', title: 'Veterinarian' }
+      { key: 'dateAdministered', header: 'Date', render: (record: any) => new Date(record.dateAdministered).toLocaleDateString() },
+      { key: 'petId', header: 'Pet ID' },
+      { key: 'vaccineName', header: 'Vaccine' },
+      { key: 'nextDue', header: 'Next Due', render: (record: any) => record.nextDue ? new Date(record.nextDue).toLocaleDateString() : 'N/A' },
+      { key: 'veterinarianId', header: 'Veterinarian' }
     ],
     []
   );

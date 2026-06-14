@@ -142,8 +142,8 @@ export const petshopService = {
           if (uploadError) handleSupabaseError(uploadError);
           const { data: urlData, error: urlError } = await supabase.storage.from('petshop-images').createSignedUrl(path, 60 * 60);
           if (urlError) handleSupabaseError(urlError);
-          if (!urlData?.signedURL) throw new Error('Unable to generate image url');
-          const { data: imgRow } = await supabase.from('product_images').insert({ product_id: product.id, url: urlData.signedURL }).select().single();
+          if (!urlData?.signedUrl) throw new Error('Unable to generate image url');
+          const { data: imgRow } = await supabase.from('product_images').insert({ product_id: product.id, url: urlData.signedUrl }).select().single();
           product.images = product.images ?? [];
           product.images.push({ id: imgRow.id, productId: imgRow.product_id, url: imgRow.url, isPrimary: imgRow.is_primary, sortOrder: imgRow.sort_order, createdAt: imgRow.created_at });
         } else if (img && img.url) {
@@ -237,8 +237,8 @@ export const petshopService = {
           if (uploadError) handleSupabaseError(uploadError);
           const { data: urlData, error: urlError } = await supabase.storage.from('petshop-images').createSignedUrl(path, 60 * 60);
           if (urlError) handleSupabaseError(urlError);
-          if (!urlData?.signedURL) throw new Error('Unable to generate image url');
-          await supabase.from('product_images').insert({ product_id: id, url: urlData.signedURL });
+          if (!urlData?.signedUrl) throw new Error('Unable to generate image url');
+          await supabase.from('product_images').insert({ product_id: id, url: urlData.signedUrl });
         } else if (img && img.url) {
           await supabase.from('product_images').insert({ product_id: id, url: img.url });
         }

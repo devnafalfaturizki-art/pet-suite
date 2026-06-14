@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card, Button } from '@/components/ui';
-import FileUpload from '@/components/common/FileUpload';
+import { FileUpload } from '@/components/common/FileUpload';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePortalPetById, usePortalPetMedicalRecords, usePortalPetVaccinations, usePortalPetWeightHistory, usePortalPetMedications, useUploadOwnerPhoto, useLogMyPetMedication } from '../portal.hooks';
 import { formatDate } from '@/lib/utils';

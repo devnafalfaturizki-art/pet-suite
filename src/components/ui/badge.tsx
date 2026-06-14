@@ -2,13 +2,14 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'secondary' | 'outline';
+  variant?: 'default' | 'secondary' | 'outline' | 'destructive';
 }
 
 const badgeClasses: Record<NonNullable<BadgeProps['variant']>, string> = {
   default: 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950',
   secondary: 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100',
-  outline: 'border border-slate-200 text-slate-900 dark:border-slate-700 dark:text-slate-100'
+  outline: 'border border-slate-200 text-slate-900 dark:border-slate-700 dark:text-slate-100',
+  destructive: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
 };
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(({ className, variant = 'default', ...props }, ref) => (

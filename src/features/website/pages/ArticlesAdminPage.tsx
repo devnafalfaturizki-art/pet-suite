@@ -18,10 +18,10 @@ export default function ArticlesAdminPage() {
       <div>
         <DataTable
           columns={[
-            { key: 'title', title: 'Title' },
-            { key: 'slug', title: 'Slug' },
-            { key: 'isPublished', title: 'Published', render: (r: any) => r.is_published ? 'Yes' : 'No' },
-            { key: 'actions', title: 'Actions', render: (r: any) => (<div className="flex gap-2"><Button size="sm" onClick={() => setEditing(r)}>Edit</Button><Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)}>Delete</Button></div>) }
+            { key: 'title', header: 'Title' },
+            { key: 'slug', header: 'Slug' },
+            { key: 'isPublished', header: 'Published', render: (r: any) => r.is_published ? 'Yes' : 'No' },
+            { key: 'actions', header: 'Actions', render: (r: any) => (<div className="flex gap-2"><Button size="sm" onClick={() => setEditing(r)}>Edit</Button><Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)}>Delete</Button></div>) }
           ]}
           data={items as any}
           isLoading={!data}

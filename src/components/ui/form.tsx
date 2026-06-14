@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { useForm as useReactHookForm } from 'react-hook-form';
+import { useForm as useReactHookForm, type FieldValues, type UseFormProps } from 'react-hook-form';
 
-export type UseFormOptions<T> = Parameters<typeof useReactHookForm<T>>[0];
-
-export function useForm<TFormValues extends Record<string, any>>(options?: UseFormOptions<TFormValues>) {
+export function useForm<TFormValues extends FieldValues = FieldValues>(options?: UseFormProps<TFormValues>) {
   return useReactHookForm<TFormValues>(options);
 }
 

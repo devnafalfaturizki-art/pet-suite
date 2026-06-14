@@ -123,13 +123,15 @@ export const appointmentsService = {
       status: 'scheduled'
     };
     const { data, error } = await supabase.from('appointments').insert(insert).select().single();
-      if (error || !data) handleSupabaseError(error);
+      if (error) handleSupabaseError(error);
+      if (!data) throw new Error('Unable to create appointment');
     return mapAppointment(data);
   },
 
   async updateAppointmentStatus(id: string, status: string) {
     const { data, error } = await supabase.from('appointments').update({ status }).eq('id', id).select().single();
-      if (error || !data) handleSupabaseError(error);
+      if (error) handleSupabaseError(error);
+      if (!data) throw new Error('Unable to update appointment status');
 
     if (status === 'completed') {
       const reservation = await supabase.from('invoices').select('id').eq('appointment_id', id).limit(1);

@@ -5,6 +5,7 @@ import type { AppointmentStatus } from '../appointments.types';
 export default function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
   const map: Record<AppointmentStatus, { color: string; icon: any; label: string }> = {
     scheduled: { color: 'text-blue-600 bg-blue-50', icon: Clock, label: 'scheduled' },
+    confirmed: { color: 'text-teal-600 bg-teal-50', icon: CheckCircle, label: 'confirmed' },
     checked_in: { color: 'text-yellow-700 bg-yellow-50', icon: Clock, label: 'checked_in' },
     in_consultation: { color: 'text-indigo-600 bg-indigo-50', icon: CheckCircle, label: 'in_consultation' },
     completed: { color: 'text-green-600 bg-green-50', icon: CheckCircle, label: 'completed' },
