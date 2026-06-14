@@ -1,16 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useModuleStore } from '../module.store';
 
+const mockFrom = vi.fn();
+
 vi.mock('@/lib/supabase', () => ({
-  supabase: { from: vi.fn() }
+  supabase: { from: mockFrom },
 }));
 
 describe('moduleStore', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useModuleStore.setState({
-      modules: { clinic: true, monitoring: false, inpatient: false, grooming: false, petshop: false, inventory: false, accounting: false, website: false },
+      modules: {
+        clinic: true,
+        monitoring: false,
+        inpatient: false,
+        grooming: false,
+        petshop: false,
+        inventory: false,
+        accounting: false,
+        website: false,
+      },
       isLoading: false,
-      error: null
+      error: null,
     });
   });
 
@@ -21,7 +33,16 @@ describe('moduleStore', () => {
   });
 
   it('setModules updates modules', () => {
-    useModuleStore.getState().setModules({ clinic: false, monitoring: true, inpatient: false, grooming: false, petshop: false, inventory: false, accounting: false, website: false });
+    useModuleStore.getState().setModules({
+      clinic: false,
+      monitoring: true,
+      inpatient: false,
+      grooming: false,
+      petshop: false,
+      inventory: false,
+      accounting: false,
+      website: false,
+    });
     const state = useModuleStore.getState();
     expect(state.modules.clinic).toBe(false);
     expect(state.modules.monitoring).toBe(true);
@@ -38,13 +59,16 @@ describe('moduleStore', () => {
   });
 
   it('fetchModuleStatus loads modules from supabase', async () => {
-    const { supabase } = await import('@/lib/supabase');
-    const single = vi.fn().mockResolvedValue({
-      data: { value: { clinic: true, monitoring: true, inpatient: false, grooming: false, petshop: false, inventory: true, accounting: false, website: false } },
-      error: null
+    const mockSelect = vi.fn().mockReturnValue({
+      data: [
+        { key: 'clinic', is_enabled: true },
+        { key: 'monitoring', is_enabled: true },
+        { key: 'inventory', is_enabled: true },
+      ],
+      error: null,
     });
-    const eq = vi.fn(() => ({ single }));
-    supabase.from = vi.fn(() => ({ select: vi.fn(() => ({ eq })) }));
+
+    mockFrom.mockReturnValue({ select: mockSelect });
 
     await useModuleStore.getState().fetchModuleStatus();
     const state = useModuleStore.getState();
@@ -54,10 +78,12 @@ describe('moduleStore', () => {
   });
 
   it('fetchModuleStatus handles error', async () => {
-    const { supabase } = await import('@/lib/supabase');
-    const single = vi.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' } });
-    const eq = vi.fn(() => ({ single }));
-    supabase.from = vi.fn(() => ({ select: vi.fn(() => ({ eq })) }));
+    const mockSelect = vi.fn().mockReturnValue({
+      data: null,
+      error: { message: 'DB Error' },
+    });
+
+    mockFrom.mockReturnValue({ select: mockSelect });
 
     await useModuleStore.getState().fetchModuleStatus();
     const state = useModuleStore.getState();

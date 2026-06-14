@@ -61,11 +61,7 @@ export default defineConfig({
     retry: 2,
     maxConcurrency: 5,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true
-      }
-    },
+    singleFork: true,
     sequence: {
       shuffle: false
     }

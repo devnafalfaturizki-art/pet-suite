@@ -75,7 +75,7 @@ function OwnerDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="date" tick={{ fill: '#64748b' }} />
                   <YAxis tickFormatter={(value) => formatCurrency(Number(value))} tick={{ fill: '#64748b' }} />
-                  <Tooltip formatter={(value: number) => formatCurrency(Number(value))} />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                   <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={3} dot={false} />
                 </LineChart>
               </ResponsiveContainer>

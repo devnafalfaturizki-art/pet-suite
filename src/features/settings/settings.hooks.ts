@@ -136,7 +136,7 @@ export function useTestEmail() {
 }
 
 export function useAuditLogs(filters: AuditLogFilter = {}) {
-  return useQuery(['settings', 'auditLogs', filters], () => settingsService.getAuditLogs(filters));
+  return useSupabaseQuery(['settings', 'auditLogs', filters], () => settingsService.getAuditLogs(filters));
 }
 
 export default {};

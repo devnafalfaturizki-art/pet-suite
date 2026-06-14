@@ -41,7 +41,7 @@ export default function WhatsAppSettingsPage() {
   const status = useMemo(() => getStatus(data, error), [data, error]);
   const statusDefinition = statusMap[status as keyof typeof statusMap];
 
-  const isMaskedKey = useMemo(() => form.apiKey.startsWith('••••'), [form.apiKey]);
+  const isMaskedKey = useMemo(() => (form.apiKey ?? '').startsWith('••••'), [form.apiKey]);
 
   return (
     <div className="space-y-6">

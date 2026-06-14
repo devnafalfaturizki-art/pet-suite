@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
@@ -10,27 +10,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const setInitializing = useAuthStore((state) => state.setInitializing);
   const [isReady, setIsReady] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     setInitializing(true);
 
     async function restoreAuth() {
       const {
         data: { session },
-        error
+        error,
       } = await supabase.auth.getSession();
 
       if (error) {
-        toast.error((error as Error)?.message ?? String(error));
+        toast.error(error.message);
       }
 
       if (session?.user) {
         try {
-          const user = await authService.fetchProfile(session.user.id, session.user.email ?? '');
+          const user = await authService.fetchProfile(
+            session.user.id,
+            session.user.email ?? '',
+          );
           setUser(user);
           setSession(session);
-        } catch (error) {
-          toast.error((error as Error)?.message ?? String(error));
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          toast.error(message);
         }
       }
 
@@ -40,10 +48,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     restoreAuth();
 
-    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
-          const user = await authService.fetchProfile(session.user.id, session.user.email ?? '');
+          const user = await authService.fetchProfile(
+            session.user.id,
+            session.user.email ?? '',
+          );
           setUser(user);
           setSession(session);
         }
@@ -53,22 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null);
         }
       } catch (err) {
-        toast.error((err as Error)?.message ?? String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error(message);
       }
     });
 
     return () => {
-      // unsubscribe listener when unmounting
-      try {
-        (data.subscription as any)?.unsubscribe?.();
-      } catch (err) {
-        // ignore
-      }
+      subscription.unsubscribe();
     };
-  }, [setSession, setUser]);
+  }, [setUser, setSession, clearAuth, setInitializing]);
 
   if (!isReady) {
-    return <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" />;
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" />
+    );
   }
 
   return <>{children}</>;

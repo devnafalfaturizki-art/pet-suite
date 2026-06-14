@@ -56,15 +56,15 @@ export default function ArticleDetailPage() {
         ← Back to Articles
       </Link>
 
-      {data.cover_url && (
-        <img src={data.cover_url} alt={data.title} className="w-full h-64 object-cover rounded-xl mb-8" />
+      {data.coverUrl && (
+        <img src={data.coverUrl} alt={data.title} className="w-full h-64 object-cover rounded-xl mb-8" />
       )}
 
       <h1 className="text-3xl font-bold">{data.title}</h1>
 
       <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">
-        {data.author && <span>By {data.author}</span>}
-        {data.published_at && <span>{formatDate(data.published_at, { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
+        {data.authorId && <span>By {data.authorId}</span>}
+        {data.publishedAt && <span>{formatDate(data.publishedAt, { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
       </div>
 
       <div className="mt-8 prose max-w-none">

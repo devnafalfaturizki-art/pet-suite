@@ -7,6 +7,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Package } from 'lucide-react';
 
 export default function InventoryReportsPage() {
   useDocumentTitle('Inventory Reports');
@@ -86,13 +87,13 @@ export default function InventoryReportsPage() {
               <BarChart data={stockValueChart} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <XAxis dataKey="category" />
                 <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="value" fill="#2563eb" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <EmptyState icon={Loader2} title="No stock value data" description="No category value data is available." />
+          <EmptyState icon={Package} title="No stock value data" description="No category value data is available." />
         )}
       </Card>
     </div>

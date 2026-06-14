@@ -1,19 +1,33 @@
 import { supabase } from '@/lib/supabase';
 import { handleSupabaseError } from '@/lib/error';
+import type { UserRole } from '@/types';
 
 export interface AuthUserPayload {
   id: string;
   email: string;
   fullName: string;
-  role: 'owner' | 'doctor' | 'staff' | 'customer';
+  role: UserRole;
   isActive: boolean;
+}
+
+interface ProfileRow {
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  email?: string;
+}
+
+interface ProfileUpdatePayload {
+  full_name?: string;
+  role?: UserRole;
+  is_active?: boolean;
 }
 
 export const authService = {
   async signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     if (error || !data.user) {
@@ -33,7 +47,7 @@ export const authService = {
 
   async sendPasswordResetEmail(email: string) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (error) {
@@ -41,10 +55,10 @@ export const authService = {
     }
   },
 
-  async getCurrentUser() {
+  async getCurrentUser(): Promise<AuthUserPayload | null> {
     const {
       data: { session },
-      error
+      error,
     } = await supabase.auth.getSession();
 
     if (error || !session?.user) {
@@ -54,7 +68,7 @@ export const authService = {
     return this.fetchProfile(session.user.id, session.user.email ?? '');
   },
 
-  async fetchProfile(userId: string, email: string) {
+  async fetchProfile(userId: string, email: string): Promise<AuthUserPayload> {
     const { data, error } = await supabase
       .from('profiles')
       .select('full_name, role, is_active')
@@ -65,16 +79,23 @@ export const authService = {
       throw new Error(error?.message ?? 'Unable to load user profile');
     }
 
+    const profile = data as ProfileRow;
+
     return {
       id: userId,
       email,
-      fullName: data.full_name ?? 'Unknown User',
-      role: data.role,
-      isActive: data.is_active
+      fullName: profile.full_name ?? 'Unknown User',
+      role: profile.role,
+      isActive: profile.is_active,
     };
   },
 
-  async createProfile(userId: string, email: string, fullName: string, role: AuthUserPayload['role'] = 'customer') {
+  async createProfile(
+    userId: string,
+    email: string,
+    fullName: string,
+    role: UserRole = 'customer',
+  ): Promise<AuthUserPayload> {
     const { data, error } = await supabase
       .from('profiles')
       .insert({ id: userId, email, full_name: fullName, role, is_active: true })
@@ -85,17 +106,22 @@ export const authService = {
       handleSupabaseError(error);
     }
 
+    const profile = data as ProfileRow;
+
     return {
       id: userId,
       email,
-      fullName: data.full_name ?? fullName,
-      role: data.role,
-      isActive: data.is_active
+      fullName: profile.full_name ?? fullName,
+      role: profile.role,
+      isActive: profile.is_active,
     };
   },
 
-  async updateProfile(userId: string, updates: { fullName?: string; role?: AuthUserPayload['role']; isActive?: boolean }) {
-    const payload: Record<string, any> = {};
+  async updateProfile(
+    userId: string,
+    updates: { fullName?: string; role?: UserRole; isActive?: boolean },
+  ): Promise<AuthUserPayload> {
+    const payload: ProfileUpdatePayload = {};
     if (updates.fullName !== undefined) payload.full_name = updates.fullName;
     if (updates.role !== undefined) payload.role = updates.role;
     if (updates.isActive !== undefined) payload.is_active = updates.isActive;
@@ -115,12 +141,14 @@ export const authService = {
       handleSupabaseError(error);
     }
 
+    const profile = data as ProfileRow;
+
     return {
       id: userId,
-      email: data.email ?? '',
-      fullName: data.full_name ?? '',
-      role: data.role,
-      isActive: data.is_active
+      email: profile.email ?? '',
+      fullName: profile.full_name ?? '',
+      role: profile.role,
+      isActive: profile.is_active,
     };
-  }
+  },
 };

@@ -25,7 +25,7 @@ describe('medicalRecordsService', () => {
     supabaseMock.from.mockReturnValueOnce({ insert }).mockReturnValueOnce({ select: loadSelect });
 
     const { medicalRecordsService } = await import('./medical-records.service');
-    const res = await medicalRecordsService.createMedicalRecord({ petId: 'p1', doctorId: 'd1', date: '2026-06-10', soap: {} as any });
+    const res = await medicalRecordsService.createMedicalRecord({ petId: 'p1', doctorId: 'd1', date: '2026-06-10', recordType: 'consultation', soap: {} as any });
     expect(res.id).toBe('m1');
   });
 });

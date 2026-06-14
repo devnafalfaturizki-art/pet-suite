@@ -3,30 +3,39 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders } from '@/test/utils';
 import { CustomerSearchPanel } from '../components/CustomerSearchPanel';
-import { supabase } from '@/lib/supabase';
+
+const mockSupabase = {
+  from: vi.fn(),
+};
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn()
-  }
+  supabase: mockSupabase,
 }));
 
 vi.mock('@/hooks/useDebounce', () => ({
-  useDebounce: (value: any) => value
+  useDebounce: (value: unknown) => value,
 }));
 
 describe('CustomerSearchPanel', () => {
   beforeEach(() => {
-    const { supabase } = require('@/lib/supabase');
-    const select = vi.fn(() => ({ ilike: vi.fn(() => ({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) })) }));
-    supabase.from.mockReturnValue({ select });
+    vi.clearAllMocks();
+    const select = vi.fn(() => ({
+      ilike: vi.fn(() => ({
+        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
+    }));
+    mockSupabase.from.mockReturnValue({ select });
   });
 
   it('selects walk-in when the user chooses no customer', async () => {
     const onSelect = vi.fn();
 
     renderWithProviders(
-      <CustomerSearchPanel onSelect={onSelect} selectedCustomerId={undefined} selectedCustomerName={undefined} />
+      <CustomerSearchPanel
+        onSelect={onSelect}
+        selectedCustomerId={undefined}
+        selectedCustomerName={undefined}
+      />,
     );
 
     const input = screen.getByLabelText(/Search customer/i);

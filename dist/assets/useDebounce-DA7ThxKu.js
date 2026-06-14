@@ -1,0 +1,1 @@
+import{r as o}from"./vendor-react-DA7CvBRn.js";function c(e,t=300){const[r,u]=o.useState(e);return o.useEffect(()=>{const n=window.setTimeout(()=>{u(e)},t);return()=>window.clearTimeout(n)},[e,t]),r}export{c as u};

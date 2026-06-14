@@ -1,48 +1,110 @@
 import { supabase } from '@/lib/supabase';
 import { handleSupabaseError } from '@/lib/error';
 import { posService } from '@/features/pos/pos.service';
-import type { Appointment, AppointmentFormData, DoctorAvailability, AppointmentServiceOption, TimeSlot } from './appointments.types';
+import type {
+  Appointment,
+  AppointmentFormData,
+  DoctorAvailability,
+  AppointmentServiceOption,
+  TimeSlot,
+} from './appointments.types';
 
-function formatScheduledAt(date: string, time: string) {
-  return `${date}T${time}`;
+interface AppointmentRow {
+  id: string;
+  queue_number: number | null;
+  customer_id: string;
+  pet_id: string;
+  doctor_id: string | null;
+  service_id: string;
+  services: { name: string }[] | null;
+  customers: { full_name: string }[] | null;
+  pets: { name: string }[] | null;
+  doctors: { profiles: { full_name: string }[] | null }[] | null;
+  notes: string | null;
+  appointment_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  status: string;
+  created_at: string;
 }
 
-function mapAppointment(record: any): Appointment {
-  const appointmentDate = record.appointment_date ?? record.appointmentDate;
-  const startTime = record.start_time ?? record.startTime;
-  const endTime = record.end_time ?? record.endTime;
+interface DoctorRow {
+  id: string;
+  profile_id: string;
+  specialization: string | null;
+  photo_url: string | null;
+  profiles: { full_name: string }[] | null;
+}
+
+interface ServiceRow {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+}
+
+interface ScheduleRow {
+  start_time: string;
+  end_time: string;
+}
+
+interface BookedSlotRow {
+  start_time: string;
+}
+
+interface AppointmentQueryParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  doctorId?: string;
+}
+
+function formatScheduledAt(date: string, time: string | null): string {
+  return `${date}T${time ?? '00:00:00'}`;
+}
+
+function mapAppointment(record: AppointmentRow): Appointment {
+  const appointmentDate = record.appointment_date;
+  const startTime = record.start_time ?? '00:00:00';
+  const endTime = record.end_time ?? '00:00:00';
 
   return {
     id: record.id,
-    queueNumber: record.queue_number !== undefined && record.queue_number !== null ? String(record.queue_number) : record.queueNumber ?? null,
-    customerId: record.customer_id ?? record.customerId,
-    customerName: record.customers?.full_name ?? record.customerName ?? null,
-    petId: record.pet_id ?? record.petId,
-    petName: record.pets?.name ?? record.petName ?? null,
-    doctorId: record.doctor_id ?? record.doctorId ?? null,
-    doctorName: record.doctors?.profiles?.full_name ?? record.doctorName ?? null,
-    serviceId: record.service_id ?? record.serviceId,
-    service: record.services?.name ?? record.service ?? '',
+    queueNumber:
+      record.queue_number !== undefined && record.queue_number !== null
+        ? String(record.queue_number)
+        : null,
+    customerId: record.customer_id,
+    customerName: record.customers?.[0]?.full_name ?? null,
+    petId: record.pet_id,
+    petName: record.pets?.[0]?.name ?? null,
+    doctorId: record.doctor_id ?? null,
+    doctorName: record.doctors?.[0]?.profiles?.[0]?.full_name ?? null,
+    serviceId: record.service_id,
+    service: record.services?.[0]?.name ?? '',
     notes: record.notes ?? null,
     appointmentDate,
     startTime,
     endTime,
-    scheduledAt: record.scheduled_at ?? record.scheduledAt ?? formatScheduledAt(appointmentDate, startTime),
-    status: record.status,
-    createdAt: record.created_at ?? record.createdAt
+    scheduledAt: formatScheduledAt(appointmentDate, startTime),
+    status: record.status as Appointment['status'],
+    createdAt: record.created_at,
   };
 }
 
-function parseTimeToMinutes(value: string) {
+function parseTimeToMinutes(value: string): number {
   const [hours, minutes] = value.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-function formatDateTime(date: Date): string {
-  return date.toISOString();
-}
-
-function buildTimeSlots(startTime: string, endTime: string, durationMinutes = 60) {
+function buildTimeSlots(
+  startTime: string,
+  endTime: string,
+  durationMinutes = 60,
+): TimeSlot[] {
   const start = parseTimeToMinutes(startTime);
   const end = parseTimeToMinutes(endTime);
   const slots: TimeSlot[] = [];
@@ -56,7 +118,7 @@ function buildTimeSlots(startTime: string, endTime: string, durationMinutes = 60
 
     slots.push({
       startTime: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}:00`,
-      endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}:00`
+      endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}:00`,
     });
   }
 
@@ -64,11 +126,16 @@ function buildTimeSlots(startTime: string, endTime: string, durationMinutes = 60
 }
 
 export const appointmentsService = {
-  async getAppointments({ page = 1, pageSize = 20, search, status, from, to, doctorId }: any = {}) {
+  async getAppointments(params: AppointmentQueryParams = {}) {
+    const { page = 1, pageSize = 20, search, status, from, to, doctorId } = params;
     const offset = (page - 1) * pageSize;
-    let query: any = supabase
+
+    let query = supabase
       .from('appointments')
-      .select('id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at', { count: 'exact' })
+      .select(
+        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
+        { count: 'exact' },
+      )
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true });
 
@@ -80,9 +147,8 @@ export const appointmentsService = {
     if (search) {
       const term = `%${search}%`;
       query = query.or(
-        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term}`
+        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term}`,
       );
-      // queue_number is integer, use eq for exact match or cast for partial
       if (/^\d+$/.test(search)) {
         query = query.or(`queue_number.eq.${parseInt(search, 10)}`);
       }
@@ -91,21 +157,26 @@ export const appointmentsService = {
     const res = await query.range(offset, offset + pageSize - 1);
     if (res.error) handleSupabaseError(res.error);
 
-    const items = Array.isArray(res.data) ? res.data.map(mapAppointment) : [];
+    const items = Array.isArray(res.data)
+      ? (res.data as unknown as AppointmentRow[]).map(mapAppointment)
+      : [];
     return {
       items,
-      total: typeof res.count === 'number' ? res.count : items.length
+      total: typeof res.count === 'number' ? res.count : items.length,
     };
   },
 
   async getAppointmentById(id: string): Promise<Appointment | null> {
     const { data, error } = await supabase
       .from('appointments')
-      .select('id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at')
+      .select(
+        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
+      )
       .eq('id', id)
       .single();
-      if (error) handleSupabaseError(error);
-    return data ? mapAppointment(data) : null;
+
+    if (error) handleSupabaseError(error);
+    return data ? mapAppointment(data as unknown as AppointmentRow) : null;
   },
 
   async createAppointment(payload: AppointmentFormData): Promise<Appointment> {
@@ -120,22 +191,43 @@ export const appointmentsService = {
       start_time: payload.startTime,
       end_time: payload.endTime,
       notes: payload.notes ?? null,
-      status: 'scheduled'
+      status: 'scheduled' as const,
     };
-    const { data, error } = await supabase.from('appointments').insert(insert).select().single();
-      if (error) handleSupabaseError(error);
-      if (!data) throw new Error('Unable to create appointment');
-    return mapAppointment(data);
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert(insert)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to create appointment');
+
+    return mapAppointment(data as unknown as AppointmentRow);
   },
 
-  async updateAppointmentStatus(id: string, status: string) {
-    const { data, error } = await supabase.from('appointments').update({ status }).eq('id', id).select().single();
-      if (error) handleSupabaseError(error);
-      if (!data) throw new Error('Unable to update appointment status');
+  async updateAppointmentStatus(id: string, status: string): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    if (!data) throw new Error('Unable to update appointment status');
 
     if (status === 'completed') {
-      const reservation = await supabase.from('invoices').select('id').eq('appointment_id', id).limit(1);
-      const alreadyExists = Array.isArray(reservation.data) ? reservation.data.length > 0 : !!reservation.data;
+      const reservation = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('appointment_id', id)
+        .limit(1);
+
+      const alreadyExists = Array.isArray(reservation.data)
+        ? reservation.data.length > 0
+        : !!reservation.data;
+
       if (!alreadyExists) {
         await posService.createInvoice({
           appointment_id: id,
@@ -149,24 +241,29 @@ export const appointmentsService = {
           change_amount: 0,
           status: 'draft',
           notes: `Draft invoice for appointment ${id}`,
-          items: []
+          items: [],
         });
       }
     }
 
-    return mapAppointment(data);
+    return mapAppointment(data as unknown as AppointmentRow);
   },
 
-  async getCalendarAppointments(from: string, to: string) {
+  async getCalendarAppointments(from: string, to: string): Promise<Appointment[]> {
     const { data, error } = await supabase
       .from('appointments')
-      .select('id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at')
+      .select(
+        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
+      )
       .gte('appointment_date', from)
       .lte('appointment_date', to)
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true });
-      if (error) handleSupabaseError(error);
-    return Array.isArray(data) ? data.map(mapAppointment) : [];
+
+    if (error) handleSupabaseError(error);
+    return Array.isArray(data)
+      ? (data as unknown as AppointmentRow[]).map(mapAppointment)
+      : [];
   },
 
   async getDoctors(search?: string) {
@@ -175,14 +272,14 @@ export const appointmentsService = {
       .select('id, profile_id, specialization, photo_url, profiles(full_name)')
       .order('created_at', { ascending: false });
 
-      if (error) handleSupabaseError(error);
+    if (error) handleSupabaseError(error);
 
-    const doctors = Array.isArray(data) ? data : [];
+    const doctors = (Array.isArray(data) ? data : []) as unknown as DoctorRow[];
     const normalized = search?.trim().toLowerCase() || '';
 
     const filtered = normalized
-      ? doctors.filter((doc: any) => {
-          const profileName = doc.profiles?.full_name?.toLowerCase() ?? '';
+      ? doctors.filter((doc) => {
+          const profileName = doc.profiles?.[0]?.full_name?.toLowerCase() ?? '';
           return (
             profileName.includes(normalized) ||
             String(doc.specialization ?? '').toLowerCase().includes(normalized)
@@ -190,19 +287,25 @@ export const appointmentsService = {
         })
       : doctors;
 
-    return filtered.slice(0, 50).map((doc: any) => ({
+    return filtered.slice(0, 50).map((doc) => ({
       id: doc.id,
       profileId: doc.profile_id,
-      fullName: doc.profiles?.full_name ?? 'Doctor',
+      fullName: doc.profiles?.[0]?.full_name ?? 'Doctor',
       specialization: doc.specialization,
-      photoUrl: doc.photo_url ?? null
+      photoUrl: doc.photo_url ?? null,
     }));
   },
 
-  async generateQueueNumber(date: string) {
+  async generateQueueNumber(date: string): Promise<string> {
     try {
-      const result = await supabase.functions.invoke('generate-queue', { body: { date } as any } as any);
-      return (result as any)?.data?.queue_number ?? `${new Date(date).toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
+      const result = await supabase.functions.invoke('generate-queue', {
+        body: { date },
+      });
+      const resultData = result.data as { queue_number?: string } | null;
+      return (
+        resultData?.queue_number ??
+        `${new Date(date).toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`
+      );
     } catch {
       const normalized = new Date(date);
       const suffix = Math.floor(Math.random() * 900) + 100;
@@ -210,7 +313,11 @@ export const appointmentsService = {
     }
   },
 
-  async getDoctorAvailability(doctorId: string, date: string, serviceDurationMinutes = 60): Promise<DoctorAvailability> {
+  async getDoctorAvailability(
+    doctorId: string,
+    date: string,
+    serviceDurationMinutes = 60,
+  ): Promise<DoctorAvailability> {
     const selectedDate = new Date(date);
     const dayOfWeek = selectedDate.getDay();
     const dateString = selectedDate.toISOString().slice(0, 10);
@@ -222,7 +329,7 @@ export const appointmentsService = {
       .eq('day_of_week', dayOfWeek)
       .eq('is_available', true);
 
-      if (scheduleError) handleSupabaseError(scheduleError);
+    if (scheduleError) handleSupabaseError(scheduleError);
 
     const { data: booked, error: bookedError } = await supabase
       .from('appointments')
@@ -231,15 +338,21 @@ export const appointmentsService = {
       .eq('appointment_date', dateString)
       .neq('status', 'cancelled');
 
-      if (bookedError) handleSupabaseError(bookedError);
+    if (bookedError) handleSupabaseError(bookedError);
 
-    const bookedSlots = new Set((booked || []).map((b: any) => b.start_time));
+    const bookedSlots = new Set(
+      ((booked || []) as BookedSlotRow[]).map((b) => b.start_time),
+    );
 
     const availableSlots: TimeSlot[] = [];
     const slotDuration = serviceDurationMinutes;
 
-    for (const schedule of schedules || []) {
-      const candidateSlots = buildTimeSlots(schedule.start_time, schedule.end_time, slotDuration);
+    for (const schedule of (schedules || []) as ScheduleRow[]) {
+      const candidateSlots = buildTimeSlots(
+        schedule.start_time,
+        schedule.end_time,
+        slotDuration,
+      );
       for (const candidate of candidateSlots) {
         if (bookedSlots.has(candidate.startTime)) continue;
         availableSlots.push(candidate);
@@ -248,21 +361,41 @@ export const appointmentsService = {
 
     return { doctorId, date: dateString, slots: availableSlots };
   },
+
   async searchServiceIds(search: string): Promise<string[]> {
-    const { data, error } = await supabase.from('services').select('id').ilike('name', `%${search}%`).limit(50);
-      if (error) handleSupabaseError(error);
-    return Array.isArray(data) ? data.map((row: any) => row.id) : [];
+    const { data, error } = await supabase
+      .from('services')
+      .select('id')
+      .ilike('name', `%${search}%`)
+      .limit(50);
+
+    if (error) handleSupabaseError(error);
+    return Array.isArray(data)
+      ? (data as { id: string }[]).map((row) => row.id)
+      : [];
   },
 
   async getServices(search?: string): Promise<AppointmentServiceOption[]> {
-    let query: any = supabase.from('services').select('id, name, duration_minutes, price').order('name');
+    let query = supabase
+      .from('services')
+      .select('id, name, duration_minutes, price')
+      .order('name');
+
     if (search) query = query.ilike('name', `%${search}%`);
+
     const { data, error } = await query;
-      if (error) handleSupabaseError(error);
+
+    if (error) handleSupabaseError(error);
+
     return Array.isArray(data)
-      ? data.map((row: any) => ({ id: row.id, name: row.name, durationMinutes: row.duration_minutes, price: Number(row.price) }))
+      ? (data as unknown as ServiceRow[]).map((row) => ({
+          id: row.id,
+          name: row.name,
+          durationMinutes: row.duration_minutes,
+          price: Number(row.price),
+        }))
       : [];
-  }
+  },
 };
 
 export default appointmentsService;

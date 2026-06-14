@@ -11,7 +11,7 @@ describe('appointmentsService', () => {
   });
 
   it('createAppointment returns created appointment', async () => {
-    const returned = { data: { id: 'a1', customer_id: 'c1', pet_id: 'p1', doctor_id: null, service_id: 's1', services: { name: 'Consult' }, scheduled_at: '2026-06-11T09:00:00.000Z', status: 'scheduled' }, error: null };
+    const returned = { data: { id: 'a1', customer_id: 'c1', pet_id: 'p1', doctor_id: null, service_id: 's1', services: [{ name: 'Consult' }], customers: [{ full_name: 'Test' }], pets: [{ name: 'Buddy' }], doctors: null, appointment_date: '2026-06-11', start_time: '09:00:00', end_time: '10:00:00', notes: 'Test booking', status: 'scheduled', created_at: '2026-06-11T00:00:00Z', queue_number: 1 }, error: null };
     const single = vi.fn().mockResolvedValue(returned);
     const select = vi.fn(() => ({ single }));
     const insert = vi.fn(() => ({ select }));

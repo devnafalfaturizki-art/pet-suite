@@ -3,7 +3,11 @@ import { useQuery, type UseQueryOptions, type QueryKey } from '@tanstack/react-q
 export function useSupabaseQuery<TData, TError = Error>(
   queryKey: QueryKey,
   queryFn: () => Promise<TData>,
-  options?: UseQueryOptions<TData, TError>
+  options?: Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>,
 ) {
-  return useQuery<TData, TError>(queryKey, queryFn, options);
+  return useQuery<TData, TError>({
+    queryKey,
+    queryFn,
+    ...options,
+  });
 }

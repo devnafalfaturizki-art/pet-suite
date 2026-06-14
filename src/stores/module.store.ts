@@ -59,7 +59,13 @@ export const useModuleStore = create<ModuleState>((set) => ({
         throw error;
       }
 
-      const status = (data || []).reduce((acc, row: any) => ({ ...acc, [row.key]: row.is_enabled }), defaultModules);
+      const status = (data || []).reduce(
+        (acc, row: { key: string; is_enabled: boolean }) => ({
+          ...acc,
+          [row.key]: row.is_enabled,
+        }),
+        defaultModules,
+      );
       set({ modules: parseModuleStatus(status), isLoading: false });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load module settings';

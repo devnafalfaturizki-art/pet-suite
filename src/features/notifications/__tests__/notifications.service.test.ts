@@ -131,7 +131,7 @@ describe('notificationsService', () => {
       const upsert = vi.fn(() => ({ select }));
       supabaseMock.from.mockReturnValue({ upsert });
 
-      const result = await notificationsService.saveWhatsAppConfig({ apiKey: 'key', phoneNumber: '+62' });
+      const result = await notificationsService.saveWhatsAppConfig({ provider: 'fonnte', apiKey: 'key', senderNumber: '+62' });
       expect(result).toBe(true);
     });
   });
@@ -156,7 +156,7 @@ describe('notificationsService', () => {
       const upsert = vi.fn(() => ({ select }));
       supabaseMock.from.mockReturnValue({ upsert });
 
-      const result = await notificationsService.saveEmailConfig({ host: 'smtp.test.com', port: 587, user: 'user', password: 'pass' });
+      const result = await notificationsService.saveEmailConfig({ host: 'smtp.test.com', port: 587, username: 'user', password: 'pass', fromEmail: 'test@test.com' });
       expect(result).toBe(true);
     });
   });

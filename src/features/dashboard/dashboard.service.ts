@@ -70,13 +70,76 @@ export interface StaffAppointmentSummary {
 export interface StaffStats {
   todayAppointments: StaffAppointmentSummary[];
   lowStockAlerts: LowStockItem[];
-  todayGrooming: { id: string; petName: string | null; service: string | null; scheduledAt: string; status: string }[];
+  todayGrooming: {
+    id: string;
+    petName: string | null;
+    service: string | null;
+    scheduledAt: string;
+    status: string;
+  }[];
+}
+
+interface InventoryRow {
+  id: string;
+  name: string;
+  current_stock: number;
+  min_stock: number;
+}
+
+interface InvoiceRow {
+  id: string;
+  invoice_number: string;
+  total: number;
+  status: string;
+  created_at: string;
+  customer_id: string;
+  customers: { full_name: string }[] | null;
+}
+
+interface AppointmentRow {
+  id: string;
+  appointment_date: string;
+  start_time: string | null;
+  status: string;
+  services: { name: string }[] | null;
+  pets: { name: string }[] | null;
+  customers: { full_name: string }[] | null;
+}
+
+interface MedicalRecordRow {
+  id: string;
+  created_at: string;
+  record_type: string;
+  pets: { name: string }[] | null;
+}
+
+interface GroomingRow {
+  id: string;
+  scheduled_at: string;
+  status: string;
+  pets: { name: string }[] | null;
+  services: { name: string }[] | null;
+}
+
+function isLowStock(item: InventoryRow): boolean {
+  return item.current_stock <= item.min_stock;
+}
+
+function getMonthEndDate(month: number, year: number): string {
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 }
 
 export const dashboardService = {
   async getOwnerStats(): Promise<OwnerStats> {
     const today = new Date().toISOString().slice(0, 10);
-    const [appointmentsResult, inpatientResult, vaccinationsResult, lowStockResult, revenueResult] = await Promise.all([
+    const [
+      appointmentsResult,
+      inpatientResult,
+      vaccinationsResult,
+      lowStockResult,
+      revenueResult,
+    ] = await Promise.all([
       supabase
         .from('appointments')
         .select('id', { count: 'exact' })
@@ -92,25 +155,33 @@ export const dashboardService = {
         .eq('status', 'pending'),
       supabase
         .from('inventory_items')
-        .select('id', { count: 'exact' })
-        .lte('current_stock', 'min_stock'),
+        .select('id, current_stock, min_stock'),
       supabase
         .from('invoices')
         .select('total')
         .eq('status', 'paid')
-        .eq('paid_at', today)
+        .eq('paid_at', today),
     ]);
 
-    [appointmentsResult, inpatientResult, vaccinationsResult, lowStockResult, revenueResult].forEach((result) => {
-      if (result.error) handleSupabaseError(result.error);
-    });
+    [appointmentsResult, inpatientResult, vaccinationsResult, lowStockResult, revenueResult].forEach(
+      (result) => {
+        if (result.error) handleSupabaseError(result.error);
+      },
+    );
+
+    const lowStockCount = (
+      (lowStockResult.data as unknown as InventoryRow[]) || []
+    ).filter(isLowStock).length;
 
     return {
-      revenueToday: (revenueResult.data || []).reduce((sum: number, invoice: any) => sum + Number(invoice.total ?? 0), 0),
+      revenueToday: (revenueResult.data || []).reduce(
+        (sum: number, invoice: { total?: number }) => sum + Number(invoice.total ?? 0),
+        0,
+      ),
       appointmentsToday: appointmentsResult.count ?? 0,
       activeInpatients: inpatientResult.count ?? 0,
       pendingVaccinations: vaccinationsResult.count ?? 0,
-      lowStockCount: lowStockResult.count ?? 0
+      lowStockCount,
     };
   },
 
@@ -135,7 +206,7 @@ export const dashboardService = {
       points[date.toISOString().slice(0, 10)] = 0;
     }
 
-    (data || []).forEach((row: any) => {
+    (data || []).forEach((row: { paid_at: string; total?: number }) => {
       const dateKey = new Date(row.paid_at).toISOString().slice(0, 10);
       points[dateKey] = (points[dateKey] ?? 0) + Number(row.total ?? 0);
     });
@@ -144,17 +215,20 @@ export const dashboardService = {
   },
 
   async getAppointmentStatusBreakdown(month: number, year: number): Promise<StatusBreakdown[]> {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = getMonthEndDate(month, year);
+
     const { data, error } = await supabase
       .from('appointments')
       .select('status, id', { count: 'exact' })
-      .gte('appointment_date', `${year}-${String(month).padStart(2, '0')}-01`)
-      .lt('appointment_date', `${year}-${String(month).padStart(2, '0')}-31`)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate)
       .order('status');
 
     if (error) handleSupabaseError(error);
 
     const counts: Record<string, number> = {};
-    (data || []).forEach((row: any) => {
+    (data || []).forEach((row: { status: string }) => {
       counts[row.status] = (counts[row.status] || 0) + 1;
     });
     return Object.entries(counts).map(([status, count]) => ({ status, count }));
@@ -169,13 +243,13 @@ export const dashboardService = {
 
     if (error) handleSupabaseError(error);
 
-    return (data || []).map((invoice: any) => ({
+    return ((data || []) as unknown as InvoiceRow[]).map((invoice) => ({
       id: invoice.id,
       invoiceNumber: invoice.invoice_number,
       total: Number(invoice.total ?? 0),
       status: invoice.status,
       createdAt: invoice.created_at,
-      customerName: invoice.customers?.full_name ?? null
+      customerName: invoice.customers?.[0]?.full_name ?? null,
     }));
   },
 
@@ -183,18 +257,19 @@ export const dashboardService = {
     const { data, error } = await supabase
       .from('inventory_items')
       .select('id, name, current_stock, min_stock')
-      .lte('current_stock', 'min_stock')
-      .order('current_stock', { ascending: true })
-      .limit(limit);
+      .order('current_stock', { ascending: true });
 
     if (error) handleSupabaseError(error);
 
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      currentStock: Number(row.current_stock ?? 0),
-      minStock: Number(row.min_stock ?? 0)
-    }));
+    return ((data || []) as unknown as InventoryRow[])
+      .filter(isLowStock)
+      .slice(0, limit)
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        currentStock: Number(row.current_stock ?? 0),
+        minStock: Number(row.min_stock ?? 0),
+      }));
   },
 
   async getDoctorStats(doctorProfileId: string): Promise<DoctorStats> {
@@ -202,7 +277,7 @@ export const dashboardService = {
       return {
         todayAppointments: [],
         recentMedicalRecords: [],
-        activeInpatients: 0
+        activeInpatients: 0,
       };
     }
 
@@ -214,12 +289,12 @@ export const dashboardService = {
 
     if (doctorError) handleSupabaseError(doctorError);
 
-    const doctorId = doctorData?.id;
+    const doctorId = (doctorData as { id: string } | null)?.id;
     if (!doctorId) {
       return {
         todayAppointments: [],
         recentMedicalRecords: [],
-        activeInpatients: 0
+        activeInpatients: 0,
       };
     }
 
@@ -227,7 +302,9 @@ export const dashboardService = {
     const [appointmentsResult, medicalRecordsResult, inpatientResult] = await Promise.all([
       supabase
         .from('appointments')
-        .select('id, appointment_date, start_time, services(name), pets(name), customers(full_name), status')
+        .select(
+          'id, appointment_date, start_time, services(name), pets(name), customers(full_name), status',
+        )
         .eq('doctor_id', doctorId)
         .eq('appointment_date', today),
       supabase
@@ -240,7 +317,7 @@ export const dashboardService = {
         .from('inpatient_records')
         .select('id', { count: 'exact' })
         .eq('admitting_doctor_id', doctorId)
-        .eq('status', 'admitted')
+        .eq('status', 'admitted'),
     ]);
 
     [appointmentsResult, medicalRecordsResult, inpatientResult].forEach((result) => {
@@ -248,22 +325,26 @@ export const dashboardService = {
     });
 
     return {
-      todayAppointments: (appointmentsResult.data || []).map((row: any) => ({
+      todayAppointments: ((appointmentsResult.data || []) as unknown as AppointmentRow[]).map(
+        (row) => ({
+          id: row.id,
+          appointmentDate: row.appointment_date,
+          startTime: row.start_time,
+          service: row.services?.[0]?.name ?? null,
+          petName: row.pets?.[0]?.name ?? null,
+          customerName: row.customers?.[0]?.full_name ?? null,
+          status: row.status,
+        }),
+      ),
+      recentMedicalRecords: (
+        (medicalRecordsResult.data || []) as unknown as MedicalRecordRow[]
+      ).map((row) => ({
         id: row.id,
-        appointmentDate: row.appointment_date,
-        startTime: row.start_time,
-        service: row.services?.name ?? null,
-        petName: row.pets?.name ?? null,
-        customerName: row.customers?.full_name ?? null,
-        status: row.status
-      })),
-      recentMedicalRecords: (medicalRecordsResult.data || []).map((row: any) => ({
-        id: row.id,
-        petName: row.pets?.name ?? null,
+        petName: row.pets?.[0]?.name ?? null,
         createdAt: row.created_at,
-        recordType: row.record_type ?? 'Record'
+        recordType: row.record_type ?? 'Record',
       })),
-      activeInpatients: inpatientResult.count ?? 0
+      activeInpatients: inpatientResult.count ?? 0,
     };
   },
 
@@ -277,14 +358,12 @@ export const dashboardService = {
       supabase
         .from('inventory_items')
         .select('id, name, current_stock, min_stock')
-        .lte('current_stock', 'min_stock')
-        .order('current_stock', { ascending: true })
-        .limit(5),
+        .order('current_stock', { ascending: true }),
       supabase
         .from('grooming_records')
         .select('id, scheduled_at, pets(name), services(name), status')
         .gte('scheduled_at', `${today}T00:00:00Z`)
-        .lte('scheduled_at', `${today}T23:59:59Z`)
+        .lte('scheduled_at', `${today}T23:59:59Z`),
     ]);
 
     [appointmentsResult, lowStockResult, groomingResult].forEach((result) => {
@@ -292,27 +371,32 @@ export const dashboardService = {
     });
 
     return {
-      todayAppointments: (appointmentsResult.data || []).map((row: any) => ({
-        id: row.id,
-        appointmentDate: row.appointment_date,
-        startTime: row.start_time,
-        service: row.services?.name ?? null,
-        petName: row.pets?.name ?? null,
-        status: row.status
-      })),
-      lowStockAlerts: (lowStockResult.data || []).map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        currentStock: Number(row.current_stock ?? 0),
-        minStock: Number(row.min_stock ?? 0)
-      })),
-      todayGrooming: (groomingResult.data || []).map((row: any) => ({
+      todayAppointments: ((appointmentsResult.data || []) as unknown as AppointmentRow[]).map(
+        (row) => ({
+          id: row.id,
+          appointmentDate: row.appointment_date,
+          startTime: row.start_time,
+          service: row.services?.[0]?.name ?? null,
+          petName: row.pets?.[0]?.name ?? null,
+          status: row.status,
+        }),
+      ),
+      lowStockAlerts: ((lowStockResult.data || []) as unknown as InventoryRow[])
+        .filter(isLowStock)
+        .slice(0, 5)
+        .map((row) => ({
+          id: row.id,
+          name: row.name,
+          currentStock: Number(row.current_stock ?? 0),
+          minStock: Number(row.min_stock ?? 0),
+        })),
+      todayGrooming: ((groomingResult.data || []) as unknown as GroomingRow[]).map((row) => ({
         id: row.id,
         scheduledAt: row.scheduled_at,
-        petName: row.pets?.name ?? null,
-        service: row.services?.name ?? null,
-        status: row.status
-      }))
+        petName: row.pets?.[0]?.name ?? null,
+        service: row.services?.[0]?.name ?? null,
+        status: row.status,
+      })),
     };
-  }
+  },
 };
