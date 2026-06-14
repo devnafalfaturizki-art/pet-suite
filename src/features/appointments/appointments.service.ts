@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from '@/lib/error';
 import { posService } from '@/features/pos/pos.service';
 import type { Appointment, AppointmentFormData, DoctorAvailability, AppointmentServiceOption, TimeSlot } from './appointments.types';
 
@@ -79,8 +80,12 @@ export const appointmentsService = {
     if (search) {
       const term = `%${search}%`;
       query = query.or(
-        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term},queue_number.ilike.${term}`
+        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term}`
       );
+      // queue_number is integer, use eq for exact match or cast for partial
+      if (/^\d+$/.test(search)) {
+        query = query.or(`queue_number.eq.${parseInt(search, 10)}`);
+      }
     }
 
     const res = await query.range(offset, offset + pageSize - 1);

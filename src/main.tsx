@@ -7,7 +7,14 @@ import { Toaster } from '@/components/ui/toaster';
 import './index.css';
 import './styles/print.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (count, error: any) => error?.code !== '42501' && error?.code !== 'PGRST116' && count < 2,
+      staleTime: 30_000,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

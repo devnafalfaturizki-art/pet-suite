@@ -52,16 +52,15 @@ export const useModuleStore = create<ModuleState>((set) => ({
 
     try {
       const { data, error } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'modules')
-        .single();
+        .from('modules')
+        .select('key, is_enabled');
 
       if (error) {
         throw error;
       }
 
-      set({ modules: parseModuleStatus(data?.value), isLoading: false });
+      const status = (data || []).reduce((acc, row: any) => ({ ...acc, [row.key]: row.is_enabled }), defaultModules);
+      set({ modules: parseModuleStatus(status), isLoading: false });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load module settings';
       set({ error: message, isLoading: false });

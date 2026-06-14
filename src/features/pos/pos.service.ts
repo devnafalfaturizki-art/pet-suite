@@ -116,12 +116,15 @@ export const posService = {
       if (insErr) handleSupabaseError(insErr);
     }
 
-    // decrement stock for product items and earn loyalty
-    let totalAmount = payload.total || 0;
+    // decrement stock for product items
     for (const it of payload.items || []) {
       try {
         if (it.item_type === 'product' && it.reference_id) {
-          await supabase.from('product_variants').update({ stock: supabase.raw('stock - ?', [it.quantity]) }).eq('id', it.reference_id);
+          const { data: variant } = await supabase.from('product_variants').select('stock').eq('id', it.reference_id).single();
+          if (variant) {
+            const newStock = Math.max(0, (variant.stock || 0) - it.quantity);
+            await supabase.from('product_variants').update({ stock: newStock }).eq('id', it.reference_id);
+          }
         }
       } catch (err) {
         if ((err as any)?.message) throw err;
@@ -132,10 +135,14 @@ export const posService = {
     // award loyalty points
     if (payload.customer_id) {
       try {
-        const earned = Math.floor((totalAmount || 0) / 1000) * (LOYALTY_EARN_RATE || 1);
+        const earned = Math.floor((payload.total || 0) / 1000) * (LOYALTY_EARN_RATE || 1);
         if (earned > 0) {
-          const { error } = await supabase.from('customers').update({ loyalty_points: supabase.raw('coalesce(loyalty_points,0) + ?', [earned]) }).eq('id', payload.customer_id);
-          if (error) handleSupabaseError(error);
+          const { data: customer } = await supabase.from('customers').select('loyalty_points').eq('id', payload.customer_id).single();
+          if (customer) {
+            const newPoints = (customer.loyalty_points || 0) + earned;
+            const { error } = await supabase.from('customers').update({ loyalty_points: newPoints }).eq('id', payload.customer_id);
+            if (error) handleSupabaseError(error);
+          }
         }
       } catch (err) {
         if ((err as any)?.message) throw err;
@@ -147,7 +154,7 @@ export const posService = {
   },
 
   async processRefund({ invoiceId, amount, reason, processedBy }: any) {
-    const { data, error } = await supabase.from('refunds').insert({ invoice_id: invoiceId, amount, reason, processed_by: processedBy }).select().single();
+    const { data, error } = await supabase.from('refunds').insert({ invoice_id: invoiceId, amount, reason, created_by: processedBy }).select().single();
     if (error) handleSupabaseError(error);
     const { error: updErr } = await supabase.from('invoices').update({ status: 'refunded' }).eq('id', invoiceId);
     if (updErr) handleSupabaseError(updErr);
@@ -184,8 +191,12 @@ export const posService = {
   },
 
   async applyLoyaltyRedeem(customerId: string, points: number) {
-    const { error } = await supabase.from('customers').update({ loyalty_points: supabase.raw('coalesce(loyalty_points,0) - ?', [points]) }).eq('id', customerId);
-    if (error) handleSupabaseError(error);
+    const { data: customer } = await supabase.from('customers').select('loyalty_points').eq('id', customerId).single();
+    if (customer) {
+      const newPoints = Math.max(0, (customer.loyalty_points || 0) - points);
+      const { error } = await supabase.from('customers').update({ loyalty_points: newPoints }).eq('id', customerId);
+      if (error) handleSupabaseError(error);
+    }
     return true;
   }
 };
