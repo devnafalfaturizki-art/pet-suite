@@ -155,7 +155,7 @@ export default function PosPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader title="Point of Sale" description="Create invoices and process payments." />
 
       <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1.2fr,1.4fr,420px]">
@@ -200,7 +200,7 @@ export default function PosPage() {
             <div className="space-y-2 pt-4">
               {results.length ? (
                 results.map((result) => (
-                  <div key={result.id} className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <div key={result.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800">
                     <div>
                       <div className="font-medium text-slate-900 dark:text-slate-100">{result.name}</div>
                       <div className="text-sm text-slate-500">{formatCurrency(result.price)}</div>
@@ -212,7 +212,7 @@ export default function PosPage() {
                   </div>
                 ))
               ) : (
-                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                   {query ? 'No items found for this search.' : 'Search products or services to add to the cart.'}
                 </div>
               )}
@@ -237,7 +237,7 @@ export default function PosPage() {
             <div className="mt-4 space-y-3">
               {cart.items.length > 0 ? (
                 cart.items.map((item) => (
-                  <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="font-medium text-slate-900 dark:text-slate-100">{item.name}</div>
@@ -261,13 +261,13 @@ export default function PosPage() {
                   </div>
                 ))
               ) : (
-                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                   Your cart is currently empty.
                 </div>
               )}
             </div>
 
-            <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex justify-between py-1"><span>Subtotal</span><span>{formatCurrency(cart.subtotal)}</span></div>
               <div className="flex justify-between py-1"><span>Discount</span><span>{formatCurrency(cart.discountTotal)}</span></div>
               <div className="flex justify-between py-1"><span>Loyalty</span><span>{formatCurrency(cart.loyaltyDiscount)}</span></div>
@@ -312,7 +312,7 @@ export default function PosPage() {
             <Button
               onClick={checkout}
               disabled={!cart.items.length || checkoutLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm transition-all duration-150 hover:from-blue-700 hover:to-blue-800 hover:shadow-card-hover active:scale-95"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 font-semibold py-3 rounded-xl text-white shadow-sm transition-all duration-150 hover:from-blue-700 hover:to-blue-800 active:scale-95"
             >
               {checkoutLoading ? 'Processing…' : 'Complete checkout'}
             </Button>

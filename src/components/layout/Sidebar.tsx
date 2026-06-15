@@ -69,7 +69,7 @@ export function Sidebar({ activePath, onNavigate, isMobileOpen = false, onClose,
         {Object.entries(sections).map(([section, sectionItems]) => (
           <div key={section} className="space-y-2">
             {!isCollapsed && (
-              <h2 className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+              <h2 className="px-2 text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {section}
               </h2>
             )}
@@ -84,8 +84,8 @@ export function Sidebar({ activePath, onNavigate, isMobileOpen = false, onClose,
                     className={cn(
                       'w-full justify-start gap-3 text-left font-normal',
                       isActive
-                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100',
+                        ? 'bg-blue-50 text-blue-700 border border-blue-100 rounded-xl dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-xl dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100',
                       isCollapsed ? 'justify-center px-2' : 'px-3'
                     )}
                     onClick={() => {

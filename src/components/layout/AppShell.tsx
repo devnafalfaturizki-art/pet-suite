@@ -73,7 +73,7 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
 
   return (
     <div className={activeTheme === 'dark' ? 'min-h-screen bg-slate-950 text-slate-100' : 'min-h-screen bg-slate-50 text-slate-900'}>
-      <div className="lg:flex">
+      <div className="lg:flex overflow-hidden">
         <Sidebar
           activePath={path}
           onNavigate={(route) => {

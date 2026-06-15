@@ -127,7 +127,7 @@ export default function InpatientDetailPage() {
   const latestObservation = observations.length > 0 ? observations[0] : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => navigate('/staff/inpatient')}>
@@ -146,7 +146,7 @@ export default function InpatientDetailPage() {
         </div>
       </div>
 
-      <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid gap-6 sm:grid-cols-4">
           <div>
             <p className="text-sm text-slate-500">Admitting doctor</p>
@@ -168,7 +168,7 @@ export default function InpatientDetailPage() {
       </Card>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="bg-slate-100 rounded-xl p-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="observations">Daily Observations</TabsTrigger>
           <TabsTrigger value="medications">Medication Schedule</TabsTrigger>
@@ -177,7 +177,7 @@ export default function InpatientDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Pet Information</h2>
             <div className="space-y-3">
               <div>
@@ -211,7 +211,7 @@ export default function InpatientDetailPage() {
           </div>
 
           {showObservationForm && (
-            <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -264,7 +264,7 @@ export default function InpatientDetailPage() {
           ) : (
             <div className="space-y-4">
               {observations.map((obs) => (
-                <Card key={obs.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Card key={obs.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm text-slate-500">{new Date(obs.observedAt).toLocaleString()}</p>
                     <p className="text-xs text-slate-400">Observer: {obs.observedBy ?? 'N/A'}</p>
@@ -313,7 +313,7 @@ export default function InpatientDetailPage() {
           ) : (
             <div className="space-y-4">
               {medications.map((med) => (
-                <Card key={med.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Card key={med.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="font-semibold text-slate-900">{med.drugName}</p>
@@ -388,7 +388,7 @@ export default function InpatientDetailPage() {
           {billLoading ? (
             <Skeleton className="h-40 w-full rounded-3xl" />
           ) : bill && bill.items.length > 0 ? (
-            <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200">
@@ -427,7 +427,7 @@ export default function InpatientDetailPage() {
           <p className="text-sm text-slate-500 mb-4">This is what your customer sees in their portal.</p>
 
           {latestObservation ? (
-            <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>

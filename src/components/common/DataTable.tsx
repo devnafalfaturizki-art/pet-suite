@@ -82,10 +82,10 @@ export function DataTable<T extends { id: string }>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <TableHead>
-            <TableRow>
+            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
               {columns.map((column) => (
                 <TableHeader key={column.key} style={column.width ? { width: column.width } : undefined}>
                   <div
@@ -107,7 +107,7 @@ export function DataTable<T extends { id: string }>({
             {data.map((record) => (
               <TableRow
                 key={record.id}
-                className={onRowClick ? 'cursor-pointer' : undefined}
+                className={onRowClick ? 'cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50'}
                 onClick={onRowClick ? () => onRowClick(record) : undefined}
               >
                 {columns.map((column) => (

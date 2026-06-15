@@ -48,18 +48,8 @@ export const posService = {
   },
 
   async getInvoiceById(id: string) {
-    const invoiceQuery: any = supabase.from('invoices');
-    const selectBuilder = typeof invoiceQuery.select === 'function'
-      ? invoiceQuery.select('*, invoice_items(*), refunds(*)')
-      : invoiceQuery;
-    const eqBuilder = typeof selectBuilder.eq === 'function'
-      ? selectBuilder.eq('id', id)
-      : selectBuilder;
-    const response = typeof eqBuilder.single === 'function'
-      ? await eqBuilder.single()
-      : await eqBuilder;
-    const data = (response as { data?: any; error?: unknown }).data;
-    const error = (response as { error?: unknown }).error;
+    const { data, error } = await supabase.from('invoices')
+      .select('*, invoice_items(*), refunds(*)').eq('id', id).single();
     if (error) handleSupabaseError(error);
     if (!data) return null;
     return {
@@ -123,15 +113,11 @@ export const posService = {
       if (insErr) handleSupabaseError(insErr);
     }
 
-    // decrement stock for product items
+    // decrement stock for product items (atomic via RPC)
     for (const it of payload.items || []) {
       try {
         if (it.item_type === 'product' && it.reference_id) {
-          const { data: variant } = await supabase.from('product_variants').select('stock').eq('id', it.reference_id).single();
-          if (variant) {
-            const newStock = Math.max(0, (variant.stock || 0) - it.quantity);
-            await supabase.from('product_variants').update({ stock: newStock }).eq('id', it.reference_id);
-          }
+          await supabase.rpc('decrement_product_stock', { variant_id: it.reference_id, qty: it.quantity });
         }
       } catch (err) {
         if ((err as any)?.message) throw err;
@@ -139,17 +125,12 @@ export const posService = {
       }
     }
 
-    // award loyalty points
+    // award loyalty points (atomic via RPC)
     if (payload.customer_id) {
       try {
         const earned = Math.floor((payload.total || 0) / 1000) * (LOYALTY_EARN_RATE || 1);
         if (earned > 0) {
-          const { data: customer } = await supabase.from('customers').select('loyalty_points').eq('id', payload.customer_id).single();
-          if (customer) {
-            const newPoints = (customer.loyalty_points || 0) + earned;
-            const { error } = await supabase.from('customers').update({ loyalty_points: newPoints }).eq('id', payload.customer_id);
-            if (error) handleSupabaseError(error);
-          }
+          await supabase.rpc('increment_loyalty_points', { customer_id: payload.customer_id, points: earned });
         }
       } catch (err) {
         if ((err as any)?.message) throw err;

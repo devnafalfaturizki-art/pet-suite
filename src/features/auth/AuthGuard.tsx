@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
+import PageSkeleton from '@/components/common/PageSkeleton';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -12,7 +13,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const location = useLocation();
 
   if (isInitializing) {
-    return <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" />;
+    return <PageSkeleton />;
   }
 
   if (!user) {

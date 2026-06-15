@@ -41,12 +41,12 @@ export const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrim
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col gap-1', className)} {...props} />
+  <div className={cn('flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
 
 export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:gap-2', className)} {...props} />
+  <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:gap-2 border-t border-slate-200 pt-4 dark:border-slate-800', className)} {...props} />
 );
 DialogFooter.displayName = 'DialogFooter';
 

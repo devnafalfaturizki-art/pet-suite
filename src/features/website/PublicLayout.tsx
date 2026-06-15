@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { useClinicProfile } from '@/features/settings/settings.hooks';
+import { useAuthStore } from '@/stores/auth.store';
 import { Menu, X } from 'lucide-react';
 
 export default function PublicLayout() {
   const { data: clinic } = useClinicProfile();
+  const user = useAuthStore((state) => state.user);
+  const role = useAuthStore((state) => state.role);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const clinicName = clinic?.name || 'PetCare Suite';
@@ -18,6 +21,8 @@ export default function PublicLayout() {
     { to: '/articles', label: 'Articles' },
     { to: '/contact', label: 'Contact' }
   ];
+
+  const dashboardLink = role === 'customer' ? '/portal' : '/dashboard';
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950">
@@ -42,6 +47,15 @@ export default function PublicLayout() {
             <Button asChild size="sm" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-sm">
               <Link to="/booking">Book Now</Link>
             </Button>
+            {user ? (
+              <Button asChild variant="outline" size="sm">
+                <Link to={dashboardLink}>Dashboard</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/login">Login</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -80,6 +94,15 @@ export default function PublicLayout() {
               <Button asChild className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700">
                 <Link to="/booking" onClick={() => setMobileOpen(false)}>Book Now</Link>
               </Button>
+              {user ? (
+                <Button asChild variant="outline" className="w-full">
+                  <Link to={dashboardLink} onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="ghost" className="w-full">
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>Login</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>

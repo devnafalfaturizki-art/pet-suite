@@ -35,15 +35,15 @@ export function AppRoutes() {
       </Route>
 
       <Route element={<AuthGuard><PortalLayout /></AuthGuard>}>
-        <Route path="portal" element={<CustomerRoute><PortalOverviewPage /></CustomerRoute>} />
-        <Route path="portal/pets" element={<CustomerRoute><PortalPetsPage /></CustomerRoute>} />
-        <Route path="portal/pets/:id" element={<CustomerRoute><PortalPetProfilePage /></CustomerRoute>} />
-        <Route path="portal/appointments" element={<CustomerRoute><PortalAppointmentsPage /></CustomerRoute>} />
-        <Route path="portal/inpatient" element={<CustomerRoute><PortalInpatientPage /></CustomerRoute>} />
-        <Route path="portal/grooming" element={<CustomerRoute><PortalGroomingPage /></CustomerRoute>} />
-        <Route path="portal/notifications" element={<CustomerRoute><PortalNotificationsPage /></CustomerRoute>} />
-        <Route path="portal/profile" element={<CustomerRoute><PortalProfilePage /></CustomerRoute>} />
-        <Route path="portal/invoices" element={<CustomerRoute><PortalInvoicesPage /></CustomerRoute>} />
+        <Route path="/portal" element={<CustomerRoute><PortalOverviewPage /></CustomerRoute>} />
+        <Route path="/portal/pets" element={<CustomerRoute><PortalPetsPage /></CustomerRoute>} />
+        <Route path="/portal/pets/:id" element={<CustomerRoute><PortalPetProfilePage /></CustomerRoute>} />
+        <Route path="/portal/appointments" element={<CustomerRoute><PortalAppointmentsPage /></CustomerRoute>} />
+        <Route path="/portal/inpatient" element={<CustomerRoute><PortalInpatientPage /></CustomerRoute>} />
+        <Route path="/portal/grooming" element={<CustomerRoute><PortalGroomingPage /></CustomerRoute>} />
+        <Route path="/portal/notifications" element={<CustomerRoute><PortalNotificationsPage /></CustomerRoute>} />
+        <Route path="/portal/profile" element={<CustomerRoute><PortalProfilePage /></CustomerRoute>} />
+        <Route path="/portal/invoices" element={<CustomerRoute><PortalInvoicesPage /></CustomerRoute>} />
       </Route>
 
       <Route element={<AuthGuard><AppShell /></AuthGuard>}>

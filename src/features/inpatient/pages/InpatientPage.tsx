@@ -106,7 +106,7 @@ export default function InpatientPage() {
   const [reviewInvoiceFor, setReviewInvoiceFor] = useState<string | null>(null);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Inpatient"
         description="Track hospitalized pets, cage assignments, observations, and discharge workflows."
@@ -143,7 +143,7 @@ export default function InpatientPage() {
             </Card>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -166,7 +166,7 @@ export default function InpatientPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="grid gap-4 md:grid-cols-[1fr_auto]">
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <Input
@@ -230,7 +230,7 @@ export default function InpatientPage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Admit new pet</h2>
