@@ -21,7 +21,31 @@ const breadcrumbLabelMap: Record<string, string> = {
   inventory: 'Inventory',
   invoices: 'Invoices',
   'medical-records': 'Medical Records',
-  profile: 'Profile'
+  profile: 'Profile',
+  pos: 'POS',
+  accounting: 'Accounting',
+  petshop: 'Pet Shop',
+  grooming: 'Grooming',
+  inpatient: 'Inpatient',
+  reports: 'Reports',
+  financial: 'Financial',
+  clinical: 'Clinical',
+  doctors: 'Doctors',
+  products: 'Products',
+  settings: 'Settings',
+  clinic: 'Clinic',
+  invoice: 'Invoice',
+  hours: 'Business Hours',
+  audit: 'Audit Log',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+  modules: 'Modules',
+  notifications: 'Notifications',
+  templates: 'Templates',
+  broadcast: 'Broadcast',
+  calendar: 'Calendar',
+  create: 'Create',
+  transactions: 'Transactions'
 };
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
@@ -44,7 +68,10 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
   }, [activeTheme]);
 
   useEffect(() => {
-    fetchModuleStatus();
+    fetchModuleStatus().catch(() => {
+      // Module fetch failure should not block the app
+      console.warn('[AppShell] Failed to fetch module status, using defaults');
+    });
   }, [fetchModuleStatus]);
 
   useEffect(() => {

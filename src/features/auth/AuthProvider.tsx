@@ -18,32 +18,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setInitializing(true);
 
-    async function restoreAuth() {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        toast.error(error.message);
-      }
-
-      if (session?.user) {
-        try {
-          const user = await authService.fetchProfile(
-            session.user.id,
-            session.user.email ?? '',
-          );
-          setUser(user);
-          setSession(session);
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          toast.error(message);
-        }
-      }
-
+    // Safety timeout: if Supabase is not configured, don't block the app forever
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      console.warn('[AuthProvider] Initialization timed out, proceeding without auth');
       setIsReady(true);
       setInitializing(false);
+    }, 10000); // 10 second timeout
+
+    async function restoreAuth() {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.warn('[AuthProvider] Session fetch error:', error.message);
+        }
+
+        if (session?.user) {
+          try {
+            const user = await authService.fetchProfile(
+              session.user.id,
+              session.user.email ?? '',
+            );
+            setUser(user);
+            setSession(session);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn('[AuthProvider] Profile fetch error:', message);
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn('[AuthProvider] Initialization error:', message);
+      } finally {
+        clearTimeout(timeoutId);
+        setIsReady(true);
+        setInitializing(false);
+      }
     }
 
     restoreAuth();

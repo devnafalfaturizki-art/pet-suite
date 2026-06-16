@@ -1,6 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy } from 'react';
 import PageSkeleton from '@/components/common/PageSkeleton';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import SuspenseWithTimeout from '@/components/common/SuspenseWithTimeout';
 import type { ReactNode } from 'react';
 import type { ModuleKey, UserRole } from '@/types';
 import { ModuleGuard } from '@/features/auth/ModuleGuard';
@@ -82,43 +83,52 @@ import {
   Wallet,
   DollarSign,
   FileText,
-  Settings
+  Settings,
+  Bell
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type NavSection = 'main' | 'clinical' | 'operations' | 'finance' | 'system';
+export type NavSection = 'operations' | 'commerce' | 'crm' | 'management';
 
 export const routeMeta: Record<string, { label: string; icon: LucideIcon; section: NavSection }> = {
-  'dashboard': { label: 'Dashboard', icon: Home, section: 'main' },
-  'staff/appointments': { label: 'Appointments', icon: CalendarDays, section: 'clinical' },
-  'doctor/medical-records': { label: 'Medical Records', icon: Stethoscope, section: 'clinical' },
-  'staff/vaccinations': { label: 'Vaccinations', icon: ShieldCheck, section: 'clinical' },
-  'staff/monitoring': { label: 'Monitoring', icon: HeartPulse, section: 'clinical' },
-  'staff/customers': { label: 'Customers', icon: Users, section: 'operations' },
-  'staff/pets': { label: 'Pets', icon: PawPrint, section: 'operations' },
+  'dashboard': { label: 'Dashboard', icon: Home, section: 'operations' },
+  'staff/appointments': { label: 'Appointments', icon: CalendarDays, section: 'operations' },
+  'staff/vaccinations': { label: 'Vaccinations', icon: ShieldCheck, section: 'operations' },
+  'staff/monitoring': { label: 'Monitoring', icon: HeartPulse, section: 'operations' },
   'staff/inpatient': { label: 'Inpatient', icon: HeartPulse, section: 'operations' },
   'staff/grooming': { label: 'Grooming', icon: Scissors, section: 'operations' },
-  'staff/petshop': { label: 'Petshop', icon: Package, section: 'operations' },
-  'staff/inventory': { label: 'Inventory', icon: Box, section: 'operations' },
-  'staff/pos': { label: 'POS', icon: ShoppingCart, section: 'finance' },
-  'staff/invoices': { label: 'Invoices', icon: Wallet, section: 'finance' },
-  'staff/accounting': { label: 'Accounting', icon: DollarSign, section: 'finance' },
-  'staff/reports/financial': { label: 'Reports', icon: FileText, section: 'system' },
-  'staff/settings/clinic': { label: 'Clinic Settings', icon: Settings, section: 'system' },
-  'staff/settings/invoice': { label: 'Invoice Settings', icon: FileText, section: 'system' },
-  'staff/settings/hours': { label: 'Business Hours', icon: CalendarDays, section: 'system' },
-  'staff/settings/whatsapp': { label: 'WhatsApp', icon: ShieldCheck, section: 'system' },
-  'staff/settings/email': { label: 'Email', icon: Wallet, section: 'system' },
-  'staff/settings/modules': { label: 'Modules', icon: Box, section: 'system' },
-  'profile': { label: 'Profile', icon: Users, section: 'main' }
+  'doctor/medical-records': { label: 'Medical Records', icon: Stethoscope, section: 'operations' },
+  'staff/pos': { label: 'POS', icon: ShoppingCart, section: 'commerce' },
+  'staff/invoices': { label: 'Invoices', icon: Wallet, section: 'commerce' },
+  'staff/inventory': { label: 'Inventory', icon: Box, section: 'commerce' },
+  'staff/petshop': { label: 'Pet Shop', icon: Package, section: 'commerce' },
+  'staff/accounting': { label: 'Accounting', icon: DollarSign, section: 'commerce' },
+  'staff/customers': { label: 'Customers', icon: Users, section: 'crm' },
+  'staff/pets': { label: 'Pets', icon: PawPrint, section: 'crm' },
+  'staff/reports/financial': { label: 'Reports', icon: FileText, section: 'management' },
+  'staff/reports/clinical': { label: 'Clinical Reports', icon: FileText, section: 'management' },
+  'staff/reports/doctors': { label: 'Doctor Reports', icon: FileText, section: 'management' },
+  'staff/reports/inventory': { label: 'Inventory Reports', icon: FileText, section: 'management' },
+  'staff/reports/products': { label: 'Product Reports', icon: FileText, section: 'management' },
+  'staff/settings/clinic': { label: 'Clinic Settings', icon: Settings, section: 'management' },
+  'staff/settings/invoice': { label: 'Invoice Settings', icon: FileText, section: 'management' },
+  'staff/settings/hours': { label: 'Business Hours', icon: CalendarDays, section: 'management' },
+  'staff/settings/whatsapp': { label: 'WhatsApp', icon: ShieldCheck, section: 'management' },
+  'staff/settings/email': { label: 'Email', icon: Wallet, section: 'management' },
+  'staff/settings/modules': { label: 'Modules', icon: Box, section: 'management' },
+  'staff/settings/audit': { label: 'Audit Log', icon: FileText, section: 'management' },
+  'staff/notifications': { label: 'Notifications', icon: Bell, section: 'management' },
+  'staff/notifications/templates': { label: 'Templates', icon: FileText, section: 'management' },
+  'staff/notifications/broadcast': { label: 'Broadcast', icon: FileText, section: 'management' },
+  'profile': { label: 'Profile', icon: Users, section: 'management' }
 };
 
 // Visual metadata for public routes
-routeMeta['home'] = { label: 'Home', icon: Home, section: 'main' };
-routeMeta['articles'] = { label: 'Articles', icon: FileText, section: 'main' };
-routeMeta['articles/:slug'] = { label: 'Article', icon: FileText, section: 'main' };
-routeMeta['services'] = { label: 'Services', icon: Stethoscope, section: 'main' };
-routeMeta['contact'] = { label: 'Contact', icon: Users, section: 'main' };
+routeMeta['home'] = { label: 'Home', icon: Home, section: 'crm' };
+routeMeta['articles'] = { label: 'Articles', icon: FileText, section: 'crm' };
+routeMeta['articles/:slug'] = { label: 'Article', icon: FileText, section: 'crm' };
+routeMeta['services'] = { label: 'Services', icon: Stethoscope, section: 'crm' };
+routeMeta['contact'] = { label: 'Contact', icon: Users, section: 'crm' };
 
 export const publicRoutes: { path: string; element: ReactNode }[] = [
   { path: '/', element: <HomePagePublic /> },
@@ -193,7 +203,13 @@ export const protectedRoutes: ProtectedRouteDefinition[] = [
 ];
 
 export function renderProtectedRoute(route: ProtectedRouteDefinition) {
-  const suspended = <ErrorBoundary><Suspense fallback={<PageSkeleton />}>{route.element}</Suspense></ErrorBoundary>;
+  const suspended = (
+    <ErrorBoundary>
+      <SuspenseWithTimeout fallback={<PageSkeleton />} timeout={15000}>
+        {route.element}
+      </SuspenseWithTimeout>
+    </ErrorBoundary>
+  );
   const element = route.moduleKey ? <ModuleGuard moduleKey={route.moduleKey}>{suspended}</ModuleGuard> : suspended;
   return route.roles ? <RoleGuard allowedRoles={route.roles}>{element}</RoleGuard> : element;
 }

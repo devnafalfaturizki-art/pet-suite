@@ -8,11 +8,9 @@ export default function RoleBasedRedirect() {
 
   switch (role) {
     case 'owner':
-      return <Navigate to="/dashboard" replace />;
     case 'doctor':
-      return <Navigate to="/doctor/medical-records" replace />;
     case 'staff':
-      return <Navigate to="/staff/customers" replace />;
+      return <Navigate to="/dashboard" replace />;
     case 'customer':
       return <Navigate to="/portal" replace />;
     default:

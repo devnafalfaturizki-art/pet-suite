@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable } from '@/components/common/DataTable';
 import { Card, Badge, Button, Skeleton } from '@/components/ui';
@@ -8,7 +9,7 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { useOwnerStats, useWeeklyRevenue, useAppointmentBreakdown, useRecentTransactions, useLowStockItems, useDoctorStats, useStaffStats } from '@/features/dashboard/dashboard.hooks';
 import { usePortalCustomer, usePortalCustomerId, usePortalInvoices, usePortalAppointments, usePortalSummary } from '@/features/portal/portal.hooks';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
-import { TrendingUp, CalendarDays, HeartPulse, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { TrendingUp, CalendarDays, HeartPulse, ShieldCheck, AlertTriangle, Stethoscope, Users, Clock, ArrowRight, Syringe, ClipboardList, Plus, Search, ShoppingCart, Wallet } from 'lucide-react';
 
 function SectionSkeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -20,10 +21,25 @@ function SectionSkeleton({ lines = 4 }: { lines?: number }) {
   );
 }
 
-function StatCard({ title, value, description, icon: Icon, gradient, glowClass, isLoading }: { title: string; value: string; description: string; icon?: React.ComponentType<{ className?: string }>; gradient?: string; glowClass?: string; isLoading?: boolean }) {
+function StatCard({ title, value, description, icon: Icon, gradient, glowClass, isLoading, onClick }: {
+  title: string;
+  value: string;
+  description: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  gradient?: string;
+  glowClass?: string;
+  isLoading?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <Card className={cn('relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-slide-up', glowClass)}>
-      <div className="absolute top-0 right-0 w-24 h-24 opacity-10 rounded-full -translate-y-1/2 translate-x-1/2" style={{ background: gradient?.replace('bg-gradient-to-br ', '').replace('from-', '').replace('to-', '').split(' ')[0] || '#3b82f6' }} />
+    <Card
+      className={cn(
+        'relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-slide-up',
+        glowClass,
+        onClick && 'cursor-pointer'
+      )}
+      onClick={onClick}
+    >
       {Icon && (
         <div className={cn('relative mb-4 flex h-11 w-11 items-center justify-center rounded-xl shadow-lg', gradient ?? 'bg-gradient-to-br from-blue-500 to-blue-600')}>
           <Icon className="h-5 w-5 text-white" />
@@ -46,15 +62,43 @@ function StatusPill({ status }: { status: string }) {
     paid: 'emerald',
     completed: 'emerald',
     scheduled: 'blue',
+    confirmed: 'blue',
     pending: 'amber',
     cancelled: 'rose',
-    'no-show': 'rose'
+    'no-show': 'rose',
+    'in-progress': 'amber',
+    admitted: 'blue',
+    discharged: 'emerald'
   };
   const variant = variantMap[status] ?? 'slate';
   return <Badge variant={variant}>{status}</Badge>;
 }
 
+function QuickActionButton({ icon: Icon, label, onClick, variant = 'default' }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  variant?: 'default' | 'primary';
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
+        variant === 'primary'
+          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+          : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function OwnerDashboard() {
+  const navigate = useNavigate();
   const statsQuery = useOwnerStats();
   const revenueQuery = useWeeklyRevenue();
   const breakdownQuery = useAppointmentBreakdown(new Date().getMonth() + 1, new Date().getFullYear());
@@ -69,6 +113,14 @@ function OwnerDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <QuickActionButton icon={Plus} label="New Appointment" onClick={() => navigate('/staff/appointments/create')} variant="primary" />
+        <QuickActionButton icon={Users} label="Add Customer" onClick={() => navigate('/staff/customers/create')} />
+        <QuickActionButton icon={ClipboardList} label="View Reports" onClick={() => navigate('/staff/reports/financial')} />
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard title="Revenue today" value={formatCurrency(stats?.revenueToday ?? 0)} description="Paid invoice revenue captured so far today." icon={TrendingUp} gradient="bg-gradient-to-br from-blue-500 to-blue-600" glowClass="glow" isLoading={statsQuery.isLoading} />
         <StatCard title="Appointments today" value={String(stats?.appointmentsToday ?? 0)} description="Scheduled patient visits for today." icon={CalendarDays} gradient="bg-gradient-to-br from-violet-500 to-violet-600" glowClass="glow-violet" isLoading={statsQuery.isLoading} />
@@ -77,6 +129,7 @@ function OwnerDashboard() {
         <StatCard title="Low stock alerts" value={String(stats?.lowStockCount ?? 0)} description="Items at or below minimum stock levels." icon={AlertTriangle} gradient="bg-gradient-to-br from-rose-500 to-rose-600" glowClass="glow-rose" isLoading={statsQuery.isLoading} />
       </div>
 
+      {/* Charts Row */}
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <Card className="p-6 glass-card">
           <div className="flex items-center justify-between gap-4">
@@ -135,7 +188,7 @@ function OwnerDashboard() {
             <div className="space-y-2">
               {breakdown.map((item) => (
                 <div key={item.status} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <span className="font-medium">{item.status}</span>
+                  <span className="font-medium capitalize">{item.status}</span>
                   <span className="font-semibold">{item.count}</span>
                 </div>
               ))}
@@ -145,6 +198,7 @@ function OwnerDashboard() {
         </Card>
       </div>
 
+      {/* Tables Row */}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-6">
           <div className="flex items-center justify-between">
@@ -152,8 +206,9 @@ function OwnerDashboard() {
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Recent invoices</p>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Latest transactions</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => transactionQuery.refetch()}>
-              Refresh
+            <Button variant="ghost" size="sm" onClick={() => navigate('/staff/invoices')}>
+              <ArrowRight className="mr-1 h-3 w-3" />
+              View all
             </Button>
           </div>
           <div className="mt-6">
@@ -179,8 +234,9 @@ function OwnerDashboard() {
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Low stock</p>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Inventory alerts</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => lowStockQuery.refetch()}>
-              Refresh
+            <Button variant="ghost" size="sm" onClick={() => navigate('/staff/inventory')}>
+              <ArrowRight className="mr-1 h-3 w-3" />
+              View all
             </Button>
           </div>
           {lowStockQuery.isLoading ? (
@@ -213,42 +269,132 @@ function OwnerDashboard() {
 }
 
 function DoctorDashboard() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const doctorQuery = useDoctorStats(user?.id);
   const doctorStats = doctorQuery.data;
   const appointmentRows = doctorStats?.todayAppointments || [];
   const recordRows = doctorStats?.recentMedicalRecords || [];
 
+  // Separate waiting vs scheduled
+  const waitingPatients = appointmentRows.filter((a) => a.status === 'confirmed' || a.status === 'scheduled');
+  const inProgressPatients = appointmentRows.filter((a) => a.status === 'in-progress');
+  const completedToday = appointmentRows.filter((a) => a.status === 'completed');
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Today appointments" value={String(appointmentRows.length)} description="Sessions scheduled for you today." icon={CalendarDays} isLoading={doctorQuery.isLoading} />
-        <StatCard title="Active inpatients" value={String(doctorStats?.activeInpatients ?? 0)} description="Patients currently in inpatient care." icon={HeartPulse} isLoading={doctorQuery.isLoading} />
-        <StatCard title="Recent records" value={String(recordRows.length)} description="Latest case notes created." icon={TrendingUp} isLoading={doctorQuery.isLoading} />
-        <Card className="space-y-3 p-6">
-          <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Next actions</div>
-          <p className="text-slate-600 dark:text-slate-300">Review upcoming appointments, update treatment notes, and close today's cases.</p>
-        </Card>
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <QuickActionButton icon={Stethoscope} label="Start Examination" onClick={() => navigate('/doctor/medical-records/create')} variant="primary" />
+        <QuickActionButton icon={CalendarDays} label="View Schedule" onClick={() => navigate('/staff/appointments')} />
+        <QuickActionButton icon={Syringe} label="Record Vaccination" onClick={() => navigate('/staff/vaccinations/create')} />
+        <QuickActionButton icon={Search} label="Find Patient" onClick={() => navigate('/staff/pets')} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Waiting patients"
+          value={String(waitingPatients.length)}
+          description="Patients checked in and waiting for you."
+          icon={Users}
+          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+          glowClass="glow-amber"
+          isLoading={doctorQuery.isLoading}
+        />
+        <StatCard
+          title="In consultation"
+          value={String(inProgressPatients.length)}
+          description="Currently being examined."
+          icon={Stethoscope}
+          gradient="bg-gradient-to-br from-blue-500 to-blue-600"
+          glowClass="glow"
+          isLoading={doctorQuery.isLoading}
+        />
+        <StatCard
+          title="Active inpatients"
+          value={String(doctorStats?.activeInpatients ?? 0)}
+          description="Patients currently in inpatient care."
+          icon={HeartPulse}
+          gradient="bg-gradient-to-br from-violet-500 to-violet-600"
+          glowClass="glow-violet"
+          isLoading={doctorQuery.isLoading}
+        />
+        <StatCard
+          title="Completed today"
+          value={String(completedToday.length)}
+          description="Appointments completed so far."
+          icon={ClipboardList}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
+          glowClass="glow-emerald"
+          isLoading={doctorQuery.isLoading}
+        />
+      </div>
+
+      {/* Waiting Queue + Today's Schedule */}
+      <div className="grid gap-6 xl:grid-cols-[1fr_1.5fr]">
+        {/* Waiting Queue */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Patient queue</p>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Waiting patients</h2>
+            </div>
+            <Badge variant="amber" className="text-xs">{waitingPatients.length} waiting</Badge>
+          </div>
+          {doctorQuery.isLoading ? (
+            <SectionSkeleton />
+          ) : waitingPatients.length ? (
+            <div className="space-y-2">
+              {waitingPatients.map((patient, index) => (
+                <div
+                  key={patient.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 transition-all hover:border-blue-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{patient.petName ?? 'Unknown pet'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{patient.service ?? 'General checkup'} · {patient.customerName ?? 'Unknown owner'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-xs text-slate-500">{patient.startTime ?? '--:--'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Users className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">No patients waiting</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Your queue will appear here when patients check in.</p>
+            </div>
+          )}
+        </Card>
+
+        {/* Today's Schedule */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Today's appointments</p>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Appointment schedule</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => doctorQuery.refetch()}>
-              Refresh
+            <Button variant="ghost" size="sm" onClick={() => navigate('/staff/appointments')}>
+              <ArrowRight className="mr-1 h-3 w-3" />
+              View all
             </Button>
           </div>
           <div className="mt-6">
             <DataTable
               columns={[
-                { key: 'appointmentDate', header: 'Date', render: (row: any) => formatDate(row.appointmentDate, { day: 'numeric', month: 'short' }) },
-                { key: 'startTime', header: 'Start', render: (row: any) => row.startTime ?? '-' },
+                { key: 'startTime', header: 'Time', render: (row: any) => row.startTime ?? '--:--' },
                 { key: 'service', header: 'Service' },
                 { key: 'petName', header: 'Pet' },
+                { key: 'customerName', header: 'Owner' },
                 { key: 'status', header: 'Status', render: (row: any) => <StatusPill status={row.status} /> }
               ]}
               data={appointmentRows}
@@ -258,38 +404,137 @@ function DoctorDashboard() {
             />
           </div>
         </Card>
+      </div>
 
-        <Card className="p-6">
+      {/* Recent Medical Records */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Recent medical records</p>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Recent notes</h2>
           </div>
-          <div className="mt-6 space-y-3">
-            {doctorQuery.isLoading ? (
-              <SectionSkeleton />
-            ) : recordRows.length ? (
-              recordRows.map((record) => (
-                <div key={record.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{record.recordType}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{record.petName ?? 'Unknown pet'}</p>
-                    </div>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">{formatDate(record.createdAt, { day: 'numeric', month: 'short' })}</span>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/doctor/medical-records')}>
+            <ArrowRight className="mr-1 h-3 w-3" />
+            View all
+          </Button>
+        </div>
+        <div className="mt-6 space-y-3">
+          {doctorQuery.isLoading ? (
+            <SectionSkeleton />
+          ) : recordRows.length ? (
+            recordRows.map((record) => (
+              <div
+                key={record.id}
+                className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700"
+                onClick={() => navigate(`/doctor/medical-records/${record.id}`)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <ClipboardList className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{record.recordType}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{record.petName ?? 'Unknown pet'}</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No recent medical records available.</p>
-            )}
-          </div>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{formatDate(record.createdAt, { day: 'numeric', month: 'short' })}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500 dark:text-slate-400">No recent medical records available.</p>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function CashierDashboard() {
+  const navigate = useNavigate();
+  const transactionQuery = useRecentTransactions();
+  const recentInvoices = transactionQuery.data || [];
+
+  const pendingInvoices = recentInvoices.filter((inv) => inv.status === 'pending');
+  const paidToday = recentInvoices.filter((inv) => inv.status === 'paid');
+
+  return (
+    <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <QuickActionButton icon={ShoppingCart} label="New Sale (POS)" onClick={() => navigate('/staff/pos')} variant="primary" />
+        <QuickActionButton icon={Search} label="Find Customer" onClick={() => navigate('/staff/customers')} />
+        <QuickActionButton icon={Wallet} label="View Invoices" onClick={() => navigate('/staff/invoices')} />
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Pending payments"
+          value={String(pendingInvoices.length)}
+          description="Invoices awaiting payment."
+          icon={Clock}
+          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+          glowClass="glow-amber"
+          isLoading={transactionQuery.isLoading}
+        />
+        <StatCard
+          title="Paid today"
+          value={String(paidToday.length)}
+          description="Transactions completed today."
+          icon={TrendingUp}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
+          glowClass="glow-emerald"
+          isLoading={transactionQuery.isLoading}
+        />
+        <StatCard
+          title="Total today"
+          value={formatCurrency(paidToday.reduce((sum, inv) => sum + inv.total, 0))}
+          description="Revenue collected today."
+          icon={Wallet}
+          gradient="bg-gradient-to-br from-blue-500 to-blue-600"
+          glowClass="glow"
+          isLoading={transactionQuery.isLoading}
+        />
+        <Card className="space-y-3 p-6">
+          <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Quick actions</div>
+          <p className="text-slate-600 dark:text-slate-300">Process payments, create invoices, and manage customer transactions.</p>
         </Card>
       </div>
+
+      {/* Recent Transactions */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Recent transactions</p>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Latest invoices</h2>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/staff/invoices')}>
+            <ArrowRight className="mr-1 h-3 w-3" />
+            View all
+          </Button>
+        </div>
+        <div className="mt-6">
+          <DataTable
+            columns={[
+              { key: 'invoiceNumber', header: 'Invoice' },
+              { key: 'customerName', header: 'Customer' },
+              { key: 'total', header: 'Total', render: (row: any) => formatCurrency(row.total) },
+              { key: 'status', header: 'Status', render: (row: any) => <StatusPill status={row.status} /> },
+              { key: 'createdAt', header: 'Date', render: (row: any) => formatDate(row.createdAt, { day: 'numeric', month: 'short' }) }
+            ]}
+            data={recentInvoices}
+            isLoading={transactionQuery.isLoading}
+            emptyTitle="No transactions yet"
+            emptyDescription="Sales and invoices will appear here once processed."
+          />
+        </div>
+      </Card>
     </div>
   );
 }
 
 function StaffDashboard() {
+  const navigate = useNavigate();
   const staffQuery = useStaffStats();
   const stats = staffQuery.data;
   const appointments = stats?.todayAppointments ?? [];
@@ -298,6 +543,14 @@ function StaffDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <QuickActionButton icon={Plus} label="New Appointment" onClick={() => navigate('/staff/appointments/create')} variant="primary" />
+        <QuickActionButton icon={Users} label="Add Customer" onClick={() => navigate('/staff/customers/create')} />
+        <QuickActionButton icon={ShoppingCart} label="Open POS" onClick={() => navigate('/staff/pos')} />
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Today appointments" value={String(appointments.length)} description="Tasks scheduled for your team today." icon={CalendarDays} isLoading={staffQuery.isLoading} />
         <StatCard title="Grooming today" value={String(grooming.length)} description="Grooming services set for today." icon={HeartPulse} isLoading={staffQuery.isLoading} />
@@ -308,6 +561,7 @@ function StaffDashboard() {
         </Card>
       </div>
 
+      {/* Schedule + Inventory */}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-6">
           <div className="flex items-center justify-between">
@@ -315,15 +569,15 @@ function StaffDashboard() {
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Today's schedule</p>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Appointment list</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => staffQuery.refetch()}>
-              Refresh
+            <Button variant="ghost" size="sm" onClick={() => navigate('/staff/appointments')}>
+              <ArrowRight className="mr-1 h-3 w-3" />
+              View all
             </Button>
           </div>
           <div className="mt-6">
             <DataTable
               columns={[
-                { key: 'appointmentDate', header: 'Date', render: (row: any) => formatDate(row.appointmentDate, { day: 'numeric', month: 'short' }) },
-                { key: 'startTime', header: 'Start', render: (row: any) => row.startTime ?? '-' },
+                { key: 'startTime', header: 'Time', render: (row: any) => row.startTime ?? '-' },
                 { key: 'service', header: 'Service' },
                 { key: 'petName', header: 'Pet' },
                 { key: 'status', header: 'Status', render: (row: any) => <StatusPill status={row.status} /> }
@@ -363,6 +617,7 @@ function StaffDashboard() {
         </Card>
       </div>
 
+      {/* Grooming Schedule */}
       <Card className="p-6">
         <div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Grooming schedule</p>
@@ -393,6 +648,7 @@ function StaffDashboard() {
 }
 
 function CustomerDashboard() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const customerIdQuery = usePortalCustomerId(user?.id);
   const summaryQuery = usePortalSummary(customerIdQuery.data ?? undefined);

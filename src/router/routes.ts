@@ -6,7 +6,7 @@ export interface AppRouteItem {
   label: string;
   path: string;
   icon: LucideIcon;
-  section: 'main' | 'clinical' | 'operations' | 'finance' | 'system';
+  section: 'operations' | 'commerce' | 'crm' | 'management';
   roles: UserRole[];
   moduleKey?: ModuleKey;
 }
