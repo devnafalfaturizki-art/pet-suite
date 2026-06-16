@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import type { RouteObject } from 'react-router-dom';
+import type { UserRole } from '@/types';
 
 // Settings
 const ClinicProfilePage = lazy(() => import('@/features/settings/pages/ClinicProfilePage'));
@@ -17,20 +17,26 @@ const FinancialReportsPage = lazy(() => import('@/features/reports/pages/Financi
 const InventoryReportsPage = lazy(() => import('@/features/reports/pages/InventoryReportsPage'));
 const ProductReportsPage = lazy(() => import('@/features/reports/pages/ProductReportsPage'));
 
-export const adminRoutes: RouteObject[] = [
-  // Settings
-  { path: 'staff/settings/clinic', element: <ClinicProfilePage /> },
-  { path: 'staff/settings/invoice', element: <InvoiceSettingsPage /> },
-  { path: 'staff/settings/hours', element: <BusinessHoursPage /> },
-  { path: 'staff/settings/audit', element: <AuditLogPage /> },
-  { path: 'staff/settings/whatsapp', element: <WhatsAppSettingsPage /> },
-  { path: 'staff/settings/email', element: <EmailSettingsPage /> },
-  { path: 'staff/settings/modules', element: <ModuleManagerPage /> },
+export interface AdminRouteConfig {
+  path: string;
+  element: React.ReactNode;
+  roles?: UserRole[];
+}
 
-  // Reports
-  { path: 'staff/reports/financial', element: <FinancialReportsPage /> },
-  { path: 'staff/reports/clinical', element: <ClinicalReportsPage /> },
-  { path: 'staff/reports/doctors', element: <DoctorReportsPage /> },
-  { path: 'staff/reports/inventory', element: <InventoryReportsPage /> },
-  { path: 'staff/reports/products', element: <ProductReportsPage /> },
+export const adminRoutes: AdminRouteConfig[] = [
+  // Settings (admin only)
+  { path: 'staff/settings/clinic', element: <ClinicProfilePage />, roles: ['admin'] },
+  { path: 'staff/settings/invoice', element: <InvoiceSettingsPage />, roles: ['admin'] },
+  { path: 'staff/settings/hours', element: <BusinessHoursPage />, roles: ['admin'] },
+  { path: 'staff/settings/audit', element: <AuditLogPage />, roles: ['admin'] },
+  { path: 'staff/settings/whatsapp', element: <WhatsAppSettingsPage />, roles: ['admin'] },
+  { path: 'staff/settings/email', element: <EmailSettingsPage />, roles: ['admin'] },
+  { path: 'staff/settings/modules', element: <ModuleManagerPage />, roles: ['admin'] },
+
+  // Reports (admin only)
+  { path: 'staff/reports/financial', element: <FinancialReportsPage />, roles: ['admin'] },
+  { path: 'staff/reports/clinical', element: <ClinicalReportsPage />, roles: ['admin'] },
+  { path: 'staff/reports/doctors', element: <DoctorReportsPage />, roles: ['admin'] },
+  { path: 'staff/reports/inventory', element: <InventoryReportsPage />, roles: ['admin'] },
+  { path: 'staff/reports/products', element: <ProductReportsPage />, roles: ['admin'] },
 ];

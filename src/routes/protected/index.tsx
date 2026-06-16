@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import type { RouteObject } from 'react-router-dom';
+import type { UserRole, ModuleKey } from '@/types';
 
 // Dashboard
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
@@ -78,75 +78,83 @@ const RoleBasedRedirect = lazy(() => import('@/features/auth/RoleBasedRedirect')
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage').then((m) => ({ default: m.ForbiddenPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
-export const protectedRoutes: RouteObject[] = [
+export interface ProtectedRouteConfig {
+  path?: string;
+  index?: boolean;
+  element: React.ReactNode;
+  roles?: UserRole[];
+  moduleKey?: ModuleKey;
+}
+
+export const protectedRoutes: ProtectedRouteConfig[] = [
   { index: true, element: <RoleBasedRedirect /> },
   { path: 'dashboard', element: <DashboardPage /> },
-  { path: 'profile', element: <ProfilePage /> },
+  { path: 'profile', element: <ProfilePage />, roles: ['admin', 'staff', 'customer'] },
 
   // Customers
-  { path: 'staff/customers', element: <CustomersPage /> },
-  { path: 'staff/customers/create', element: <CreateCustomerPage /> },
-  { path: 'staff/customers/:id', element: <CustomerDetailPage /> },
-  { path: 'staff/customers/:id/edit', element: <EditCustomerPage /> },
+  { path: 'staff/customers', element: <CustomersPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/customers/create', element: <CreateCustomerPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/customers/:id', element: <CustomerDetailPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/customers/:id/edit', element: <EditCustomerPage />, roles: ['admin', 'staff'] },
 
   // Pets
-  { path: 'staff/pets', element: <PetsPage /> },
-  { path: 'staff/pets/create', element: <CreatePetPage /> },
-  { path: 'staff/pets/:id', element: <PetProfilePage /> },
-  { path: 'staff/pets/:id/edit', element: <EditPetPage /> },
+  { path: 'staff/pets', element: <PetsPage />, roles: ['admin', 'staff', 'customer'] },
+  { path: 'staff/pets/create', element: <CreatePetPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/pets/:id', element: <PetProfilePage />, roles: ['admin', 'staff', 'customer'] },
+  { path: 'staff/pets/:id/edit', element: <EditPetPage />, roles: ['admin', 'staff'] },
 
   // Appointments
-  { path: 'staff/appointments', element: <AppointmentsPage /> },
-  { path: 'staff/appointments/create', element: <CreateAppointmentPage /> },
-  { path: 'staff/appointments/calendar', element: <AppointmentCalendarPage /> },
-  { path: 'staff/appointments/:id', element: <AppointmentDetailPage /> },
+  { path: 'staff/appointments', element: <AppointmentsPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/appointments/create', element: <CreateAppointmentPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/appointments/calendar', element: <AppointmentCalendarPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/appointments/:id', element: <AppointmentDetailPage />, roles: ['admin', 'staff'] },
 
   // Inventory
-  { path: 'staff/inventory', element: <InventoryPage /> },
+  { path: 'staff/inventory', element: <InventoryPage />, roles: ['admin', 'staff'] },
 
   // POS
-  { path: 'staff/pos', element: <PosPage /> },
-  { path: 'staff/pos/transactions', element: <TransactionsPage /> },
-  { path: 'staff/pos/transactions/:id', element: <InvoiceDetailPage /> },
+  { path: 'staff/pos', element: <PosPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/pos/transactions', element: <TransactionsPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/pos/transactions/:id', element: <InvoiceDetailPage />, roles: ['admin', 'staff'] },
 
   // Invoices
-  { path: 'staff/invoices', element: <InvoicesPage /> },
+  { path: 'staff/invoices', element: <InvoicesPage />, roles: ['admin', 'staff'] },
 
   // Pet Shop
-  { path: 'staff/petshop', element: <PetshopPage /> },
-  { path: 'staff/petshop/create', element: <ProductFormPage /> },
-  { path: 'staff/petshop/:id', element: <ProductDetailPage /> },
-  { path: 'staff/petshop/:id/edit', element: <ProductFormPage /> },
+  { path: 'staff/petshop', element: <PetshopPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/petshop/create', element: <ProductFormPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/petshop/:id', element: <ProductDetailPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/petshop/:id/edit', element: <ProductFormPage />, roles: ['admin', 'staff'] },
 
   // Grooming
-  { path: 'staff/grooming', element: <GroomingPage /> },
+  { path: 'staff/grooming', element: <GroomingPage />, roles: ['admin', 'staff'] },
 
   // Inpatient
-  { path: 'staff/inpatient', element: <InpatientPage /> },
-  { path: 'staff/inpatient/:id', element: <InpatientDetailPage /> },
+  { path: 'staff/inpatient', element: <InpatientPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/inpatient/:id', element: <InpatientDetailPage />, roles: ['admin', 'staff'] },
 
   // Accounting
-  { path: 'staff/accounting', element: <AccountingPage /> },
+  { path: 'staff/accounting', element: <AccountingPage />, roles: ['admin', 'staff'] },
 
   // Notifications
-  { path: 'staff/notifications', element: <NotificationLogPage /> },
-  { path: 'staff/notifications/templates', element: <TemplatesPage /> },
-  { path: 'staff/notifications/broadcast', element: <BroadcastPage /> },
+  { path: 'staff/notifications', element: <NotificationLogPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/notifications/templates', element: <TemplatesPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/notifications/broadcast', element: <BroadcastPage />, roles: ['admin', 'staff'] },
 
-  // Medical Records (doctor)
-  { path: 'doctor/medical-records', element: <MedicalRecordsPage /> },
-  { path: 'doctor/medical-records/create', element: <CreateMedicalRecordPage /> },
-  { path: 'doctor/medical-records/:id', element: <MedicalRecordDetailPage /> },
+  // Medical Records (admin only)
+  { path: 'doctor/medical-records', element: <MedicalRecordsPage />, roles: ['admin'] },
+  { path: 'doctor/medical-records/create', element: <CreateMedicalRecordPage />, roles: ['admin'] },
+  { path: 'doctor/medical-records/:id', element: <MedicalRecordDetailPage />, roles: ['admin'] },
 
   // Vaccinations
-  { path: 'staff/vaccinations', element: <VaccinationsPage /> },
-  { path: 'staff/vaccinations/create', element: <CreateVaccinationPage /> },
-  { path: 'staff/vaccinations/:id', element: <VaccinationDetailPage /> },
+  { path: 'staff/vaccinations', element: <VaccinationsPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/vaccinations/create', element: <CreateVaccinationPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/vaccinations/:id', element: <VaccinationDetailPage />, roles: ['admin', 'staff'] },
 
   // Monitoring
-  { path: 'staff/monitoring', element: <MonitoringPage /> },
-  { path: 'staff/monitoring/create', element: <CreateMonitoringPage /> },
-  { path: 'staff/monitoring/:id', element: <MonitoringDetailPage /> },
+  { path: 'staff/monitoring', element: <MonitoringPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/monitoring/create', element: <CreateMonitoringPage />, roles: ['admin', 'staff'] },
+  { path: 'staff/monitoring/:id', element: <MonitoringDetailPage />, roles: ['admin', 'staff'] },
 
   // Error pages
   { path: '403', element: <ForbiddenPage /> },

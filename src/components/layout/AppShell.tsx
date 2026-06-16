@@ -8,7 +8,7 @@ import { PageTransition } from '@/components/common/PageTransition';
 import { useUIStore } from '@/stores/ui.store';
 import { useModuleStore } from '@/stores/module.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { getCommandRoutes } from '@/router/routes';
+import { getCommandRoutes } from '@/lib/routes';
 import { useGlobalShortcuts } from '@/shared/hooks/useKeyboardShortcuts';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';

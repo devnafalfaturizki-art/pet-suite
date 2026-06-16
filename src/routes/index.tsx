@@ -49,31 +49,20 @@ export function AppRoutes() {
   return (
     <Routes>
       {/* Public auth routes */}
-      <Route path="/login" element={
-        <Suspense fallback={<PageLoader />}>
-          {authRoutes.map((route) => (
-            route.index
-              ? <Route key="auth-index" index element={null} />
-              : null
-          ))}
-        </Suspense>
-      } />
       {authRoutes.map((route) => (
-        route.path ? (
-          <Route
-            key={route.path}
-            path={`/${route.path}`}
-            element={
-              <ErrorBoundary>
-                <SuspenseWithTimeout fallback={<PageLoader />} timeout={15000}>
-                  <PageTransition>
-                    {route.element}
-                  </PageTransition>
-                </SuspenseWithTimeout>
-              </ErrorBoundary>
-            }
-          />
-        ) : null
+        <Route
+          key={route.path ?? 'auth-login'}
+          path={route.path ?? '/login'}
+          element={
+            <ErrorBoundary>
+              <SuspenseWithTimeout fallback={<PageLoader />} timeout={15000}>
+                <PageTransition>
+                  {route.element}
+                </PageTransition>
+              </SuspenseWithTimeout>
+            </ErrorBoundary>
+          }
+        />
       ))}
 
       {/* Public website routes */}
@@ -150,53 +139,9 @@ export function AppRoutes() {
 
       {/* Protected staff routes */}
       <Route element={<AuthGuard><AppShell /></AuthGuard>}>
-        {protectedRoutes.map((route) => (
-          route.index ? (
-            <Route
-              key="protected-index"
-              index
-              element={
-                <ErrorBoundary>
-                  <SuspenseWithTimeout fallback={<PageSkeleton />} timeout={15000}>
-                    <PageTransition>
-                      {route.element}
-                    </PageTransition>
-                  </SuspenseWithTimeout>
-                </ErrorBoundary>
-              }
-            />
-          ) : (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={
-                <ErrorBoundary>
-                  <SuspenseWithTimeout fallback={<PageSkeleton />} timeout={15000}>
-                    <PageTransition>
-                      {route.element}
-                    </PageTransition>
-                  </SuspenseWithTimeout>
-                </ErrorBoundary>
-              }
-            />
-          )
-        ))}
-        {/* Admin routes (settings + reports) */}
-        {adminRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              <ErrorBoundary>
-                <SuspenseWithTimeout fallback={<PageSkeleton />} timeout={15000}>
-                  <PageTransition>
-                    {route.element}
-                  </PageTransition>
-                </SuspenseWithTimeout>
-              </ErrorBoundary>
-            }
-          />
-        ))}
+        {renderRoutes(protectedRoutes)}
+        {/* Admin routes (settings + reports) with role guards */}
+        {renderRoutes(adminRoutes)}
       </Route>
 
       {/* Catch-all redirect */}

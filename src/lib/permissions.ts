@@ -54,7 +54,7 @@ export interface Permission {
 // ============================================================
 
 const rolePermissions: Record<UserRole, Permission[]> = {
-  owner: [
+  admin: [
     // Full access to everything
     { action: 'create', resource: 'appointments' },
     { action: 'read', resource: 'appointments' },
@@ -123,31 +123,6 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     { action: 'export', resource: 'audit_logs' },
     { action: 'read', resource: 'users' },
     { action: 'update', resource: 'users' },
-  ],
-  doctor: [
-    { action: 'create', resource: 'appointments' },
-    { action: 'read', resource: 'appointments' },
-    { action: 'update', resource: 'appointments' },
-    { action: 'cancel', resource: 'appointments' },
-    { action: 'reschedule', resource: 'appointments' },
-    { action: 'read', resource: 'customers' },
-    { action: 'read', resource: 'pets' },
-    { action: 'create', resource: 'medical_records' },
-    { action: 'read', resource: 'medical_records' },
-    { action: 'update', resource: 'medical_records' },
-    { action: 'create', resource: 'vaccinations' },
-    { action: 'read', resource: 'vaccinations' },
-    { action: 'update', resource: 'vaccinations' },
-    { action: 'create', resource: 'monitoring' },
-    { action: 'read', resource: 'monitoring' },
-    { action: 'update', resource: 'monitoring' },
-    { action: 'read', resource: 'inpatient' },
-    { action: 'update', resource: 'inpatient' },
-    { action: 'discharge', resource: 'inpatient' },
-    { action: 'read', resource: 'grooming' },
-    { action: 'read', resource: 'inventory' },
-    { action: 'read', resource: 'reports' },
-    { action: 'read', resource: 'notifications' },
   ],
   staff: [
     { action: 'create', resource: 'appointments' },

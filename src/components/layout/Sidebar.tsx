@@ -6,7 +6,7 @@ import { useModuleStore } from '@/stores/module.store';
 import { useUIStore } from '@/stores/ui.store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui';
-import { getNavigationRoutes } from '@/router/routes';
+import { getNavigationRoutes } from '@/lib/routes';
 
 interface SidebarProps {
   activePath: string;

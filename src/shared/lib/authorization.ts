@@ -37,7 +37,7 @@ export type Permission =
   | 'users:manage';
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  owner: [
+  admin: [
     'appointment:create', 'appointment:read', 'appointment:update', 'appointment:delete', 'appointment:checkin',
     'medical:create', 'medical:read', 'medical:update',
     'vaccination:create', 'vaccination:read',
@@ -49,14 +49,6 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'settings:read', 'settings:update',
     'users:manage',
   ],
-  doctor: [
-    'appointment:create', 'appointment:read', 'appointment:update', 'appointment:checkin',
-    'medical:create', 'medical:read', 'medical:update',
-    'vaccination:create', 'vaccination:read',
-    'billing:read',
-    'customer:read',
-    'pet:create', 'pet:read', 'pet:update',
-  ],
   staff: [
     'appointment:create', 'appointment:read', 'appointment:update', 'appointment:checkin',
     'medical:read',
@@ -65,12 +57,6 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'inventory:read', 'inventory:update',
     'customer:create', 'customer:read', 'customer:update',
     'pet:create', 'pet:read', 'pet:update',
-  ],
-  cashier: [
-    'appointment:read',
-    'billing:create', 'billing:read', 'billing:update',
-    'customer:read',
-    'pet:read',
   ],
   customer: [
     'appointment:read',

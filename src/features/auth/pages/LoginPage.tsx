@@ -14,32 +14,18 @@ interface RoleOption {
 
 const ROLES: RoleOption[] = [
   {
-    role: 'owner',
-    label: 'Owner',
-    description: 'Full access — revenue, reports, settings',
+    role: 'admin',
+    label: 'Admin',
+    description: 'Full access — revenue, reports, settings, medical records',
     icon: ShieldCheck,
     color: 'from-indigo-500 to-indigo-600',
   },
   {
-    role: 'doctor',
-    label: 'Doctor',
-    description: 'Medical records, examinations, vaccinations',
-    icon: Stethoscope,
-    color: 'from-emerald-500 to-emerald-600',
-  },
-  {
     role: 'staff',
-    label: 'Receptionist',
-    description: 'Appointments, customers, scheduling',
+    label: 'Staff',
+    description: 'Appointments, customers, POS, scheduling',
     icon: Users,
     color: 'from-blue-500 to-blue-600',
-  },
-  {
-    role: 'cashier',
-    label: 'Cashier',
-    description: 'POS, invoices, payments',
-    icon: ShoppingCart,
-    color: 'from-amber-500 to-amber-600',
   },
   {
     role: 'customer',

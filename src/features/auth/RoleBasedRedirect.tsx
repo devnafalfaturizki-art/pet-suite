@@ -7,8 +7,7 @@ export default function RoleBasedRedirect() {
   if (!role) return <Navigate to="/login" replace />;
 
   switch (role) {
-    case 'owner':
-    case 'doctor':
+    case 'admin':
     case 'staff':
       return <Navigate to="/dashboard" replace />;
     case 'customer':

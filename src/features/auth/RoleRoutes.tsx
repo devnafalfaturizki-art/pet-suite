@@ -5,24 +5,12 @@ interface RoleRouteProps {
   children: ReactNode;
 }
 
-export function OwnerRoute({ children }: RoleRouteProps) {
-  return <RoleGuard allowedRoles={['owner']}>{children}</RoleGuard>;
-}
-
-export function DoctorRoute({ children }: RoleRouteProps) {
-  return <RoleGuard allowedRoles={['owner', 'doctor']}>{children}</RoleGuard>;
+export function AdminRoute({ children }: RoleRouteProps) {
+  return <RoleGuard allowedRoles={['admin']}>{children}</RoleGuard>;
 }
 
 export function StaffRoute({ children }: RoleRouteProps) {
-  return <RoleGuard allowedRoles={['owner', 'staff']}>{children}</RoleGuard>;
-}
-
-export function StaffDoctorRoute({ children }: RoleRouteProps) {
-  return <RoleGuard allowedRoles={['owner', 'doctor', 'staff']}>{children}</RoleGuard>;
-}
-
-export function StaffCustomerRoute({ children }: RoleRouteProps) {
-  return <RoleGuard allowedRoles={['owner', 'staff', 'customer']}>{children}</RoleGuard>;
+  return <RoleGuard allowedRoles={['admin', 'staff']}>{children}</RoleGuard>;
 }
 
 export function CustomerRoute({ children }: RoleRouteProps) {

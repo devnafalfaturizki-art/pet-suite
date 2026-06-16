@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModuleStore } from '@/stores/module.store';
 import { supabase } from '@/lib/supabase';
-import { getCommandRoutes } from '@/router/routes';
-import type { AppRouteItem } from '@/router/routes';
+import { getCommandRoutes } from '@/lib/routes';
+import type { AppRouteItem } from '@/lib/routes';
 
 interface CommandPaletteProps {
   open: boolean;

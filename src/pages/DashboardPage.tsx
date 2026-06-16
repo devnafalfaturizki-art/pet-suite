@@ -97,7 +97,7 @@ function QuickActionButton({ icon: Icon, label, onClick, variant = 'default' }: 
   );
 }
 
-function OwnerDashboard() {
+function AdminDashboard() {
   const navigate = useNavigate();
   const statsQuery = useOwnerStats();
   const revenueQuery = useWeeklyRevenue();
@@ -449,90 +449,6 @@ function DoctorDashboard() {
   );
 }
 
-function CashierDashboard() {
-  const navigate = useNavigate();
-  const transactionQuery = useRecentTransactions();
-  const recentInvoices = transactionQuery.data || [];
-
-  const pendingInvoices = recentInvoices.filter((inv) => inv.status === 'pending');
-  const paidToday = recentInvoices.filter((inv) => inv.status === 'paid');
-
-  return (
-    <div className="space-y-6">
-      {/* Quick Actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        <QuickActionButton icon={ShoppingCart} label="New Sale (POS)" onClick={() => navigate('/staff/pos')} variant="primary" />
-        <QuickActionButton icon={Search} label="Find Customer" onClick={() => navigate('/staff/customers')} />
-        <QuickActionButton icon={Wallet} label="View Invoices" onClick={() => navigate('/staff/invoices')} />
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Pending payments"
-          value={String(pendingInvoices.length)}
-          description="Invoices awaiting payment."
-          icon={Clock}
-          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
-          glowClass="glow-amber"
-          isLoading={transactionQuery.isLoading}
-        />
-        <StatCard
-          title="Paid today"
-          value={String(paidToday.length)}
-          description="Transactions completed today."
-          icon={TrendingUp}
-          gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
-          glowClass="glow-emerald"
-          isLoading={transactionQuery.isLoading}
-        />
-        <StatCard
-          title="Total today"
-          value={formatCurrency(paidToday.reduce((sum, inv) => sum + inv.total, 0))}
-          description="Revenue collected today."
-          icon={Wallet}
-          gradient="bg-gradient-to-br from-blue-500 to-blue-600"
-          glowClass="glow"
-          isLoading={transactionQuery.isLoading}
-        />
-        <Card className="space-y-3 p-6">
-          <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Quick actions</div>
-          <p className="text-slate-600 dark:text-slate-300">Process payments, create invoices, and manage customer transactions.</p>
-        </Card>
-      </div>
-
-      {/* Recent Transactions */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Recent transactions</p>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Latest invoices</h2>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/staff/invoices')}>
-            <ArrowRight className="mr-1 h-3 w-3" />
-            View all
-          </Button>
-        </div>
-        <div className="mt-6">
-          <DataTable
-            columns={[
-              { key: 'invoiceNumber', header: 'Invoice' },
-              { key: 'customerName', header: 'Customer' },
-              { key: 'total', header: 'Total', render: (row: any) => formatCurrency(row.total) },
-              { key: 'status', header: 'Status', render: (row: any) => <StatusPill status={row.status} /> },
-              { key: 'createdAt', header: 'Date', render: (row: any) => formatDate(row.createdAt, { day: 'numeric', month: 'short' }) }
-            ]}
-            data={recentInvoices}
-            isLoading={transactionQuery.isLoading}
-            emptyTitle="No transactions yet"
-            emptyDescription="Sales and invoices will appear here once processed."
-          />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 function StaffDashboard() {
   const navigate = useNavigate();
   const staffQuery = useStaffStats();
@@ -754,10 +670,8 @@ export function DashboardPage() {
 
   const dashboardContent = useMemo(() => {
     switch (role) {
-      case 'owner':
-        return <OwnerDashboard />;
-      case 'doctor':
-        return <DoctorDashboard />;
+      case 'admin':
+        return <AdminDashboard />;
       case 'staff':
         return <StaffDashboard />;
       case 'customer':
