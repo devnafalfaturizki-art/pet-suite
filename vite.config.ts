@@ -5,6 +5,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/', // Explicit SPA base path
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -15,15 +16,22 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            // Core vendor chunks - order matters for preload
+            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'vendor-react';
+            if (id.includes('node_modules/react-router-dom')) return 'vendor-react-router';
+            if (id.includes('node_modules/@tanstack/react-query')) return 'vendor-react-query';
+            if (id.includes('node_modules/@supabase/supabase-js')) return 'vendor-supabase';
             if (id.includes('node_modules/recharts')) return 'vendor-recharts';
             if (id.includes('node_modules/lucide-react')) return 'vendor-lucide';
-            if (id.includes('node_modules/@tanstack/react-query')) return 'vendor-react-query';
-            if (id.includes('node_modules/react-router-dom')) return 'vendor-react-router';
-            if (id.includes('node_modules/react')) return 'vendor-react';
+            if (id.includes('node_modules/zustand')) return 'vendor-zustand';
+            if (id.includes('node_modules/date-fns')) return 'vendor-date-fns';
+            if (id.includes('node_modules/react-hook-form')) return 'vendor-forms';
           }
         }
       }
-    }
+    },
+    // Ensure chunk names are stable for long-term caching
+    chunkSizeWarningLimit: 500,
   },
   test: {
     environment: 'jsdom',

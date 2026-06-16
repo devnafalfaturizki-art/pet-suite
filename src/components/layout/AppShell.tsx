@@ -8,6 +8,7 @@ import { useUIStore } from '@/stores/ui.store';
 import { useModuleStore } from '@/stores/module.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { getCommandRoutes } from '@/router/routes';
+import { useGlobalShortcuts } from '@/shared/hooks/useKeyboardShortcuts';
 
 const breadcrumbLabelMap: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -60,6 +61,9 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
   const fetchModuleStatus = useModuleStore((state) => state.fetchModuleStatus);
   const modules = useModuleStore((state) => state.modules);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Initialize global keyboard shortcuts
+  useGlobalShortcuts();
 
   const path = location.pathname;
 
