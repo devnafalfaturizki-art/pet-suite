@@ -1,113 +1,32 @@
 import { supabase } from '@/lib/supabase';
-import { handleSupabaseError } from '@/lib/error';
-import { posService } from '@/features/pos/pos.service';
+import { Repository, RepositoryError } from '@/lib/repository';
+import { appointmentStatusMachine } from './appointments.types';
 import type {
   Appointment,
   AppointmentFormData,
+  AppointmentStatus,
+  AppointmentQueryParams,
+  AppointmentStats,
+  AppointmentConflict,
   DoctorAvailability,
   AppointmentServiceOption,
   TimeSlot,
 } from './appointments.types';
 
-interface AppointmentRow {
-  id: string;
-  queue_number: number | null;
-  customer_id: string;
-  pet_id: string;
-  doctor_id: string | null;
-  service_id: string;
-  services: { name: string }[] | null;
-  customers: { full_name: string }[] | null;
-  pets: { name: string }[] | null;
-  doctors: { profiles: { full_name: string }[] | null }[] | null;
-  notes: string | null;
-  appointment_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  status: string;
-  created_at: string;
-}
+// ============================================================
+// Appointment Repository
+// ============================================================
 
-interface DoctorRow {
-  id: string;
-  profile_id: string;
-  specialization: string | null;
-  photo_url: string | null;
-  profiles: { full_name: string }[] | null;
-}
+const appointmentRepo = new Repository<Appointment>({
+  table: 'appointments',
+  entityName: 'appointment',
+  softDelete: false,
+  auditEnabled: true,
+});
 
-interface ServiceRow {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  price: number;
-}
-
-interface ScheduleRow {
-  start_time: string;
-  end_time: string;
-}
-
-interface BookedSlotRow {
-  start_time: string;
-}
-
-interface AppointmentQueryParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  status?: string;
-  from?: string;
-  to?: string;
-  doctorId?: string;
-}
-
-function getFirstNestedName(value: unknown): string | null {
-  if (Array.isArray(value)) {
-    const first = value[0] as { full_name?: string } | undefined;
-    return first?.full_name ?? null;
-  }
-
-  if (value && typeof value === 'object' && 'full_name' in value) {
-    const first = value as { full_name?: string };
-    return first.full_name ?? null;
-  }
-
-  return null;
-}
-
-function formatScheduledAt(date: string, time: string | null): string {
-  return `${date}T${time ?? '00:00:00'}`;
-}
-
-function mapAppointment(record: AppointmentRow): Appointment {
-  const appointmentDate = record.appointment_date;
-  const startTime = record.start_time ?? '00:00:00';
-  const endTime = record.end_time ?? '00:00:00';
-
-  return {
-    id: record.id,
-    queueNumber:
-      record.queue_number !== undefined && record.queue_number !== null
-        ? String(record.queue_number)
-        : null,
-    customerId: record.customer_id,
-    customerName: record.customers?.[0]?.full_name ?? null,
-    petId: record.pet_id,
-    petName: record.pets?.[0]?.name ?? null,
-    doctorId: record.doctor_id ?? null,
-    doctorName: getFirstNestedName(record.doctors?.[0]?.profiles) ?? null,
-    serviceId: record.service_id,
-    service: record.services?.[0]?.name ?? '',
-    notes: record.notes ?? null,
-    appointmentDate,
-    startTime,
-    endTime,
-    scheduledAt: formatScheduledAt(appointmentDate, startTime),
-    status: record.status as Appointment['status'],
-    createdAt: record.created_at,
-  };
-}
+// ============================================================
+// Helper Functions
+// ============================================================
 
 function parseTimeToMinutes(value: string): number {
   const [hours, minutes] = value.split(':').map(Number);
@@ -131,72 +50,162 @@ function buildTimeSlots(
     const endMinute = finish % 60;
 
     slots.push({
-      startTime: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}:00`,
-      endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}:00`,
+      startTime: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`,
+      endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`,
+      available: true,
     });
   }
 
   return slots;
 }
 
+function mapAppointment(record: any): Appointment {
+  return {
+    id: record.id,
+    queueNumber: record.queue_number ? String(record.queue_number) : null,
+    customerId: record.customer_id,
+    customerName: record.customers?.full_name ?? record.customers?.[0]?.full_name ?? null,
+    customerPhone: record.customers?.phone ?? null,
+    petId: record.pet_id,
+    petName: record.pets?.name ?? record.pets?.[0]?.name ?? null,
+    petSpecies: record.pets?.species ?? null,
+    petBreed: record.pets?.breed ?? null,
+    doctorId: record.doctor_id ?? null,
+    doctorName: record.doctors?.profiles?.full_name ?? record.doctors?.[0]?.profiles?.full_name ?? null,
+    serviceId: record.service_id,
+    service: record.services?.name ?? record.services?.[0]?.name ?? '',
+    serviceDuration: record.services?.duration_minutes ?? null,
+    servicePrice: record.services?.price ?? null,
+    notes: record.notes ?? null,
+    appointmentDate: record.appointment_date,
+    startTime: record.start_time ?? '00:00',
+    endTime: record.end_time ?? '00:00',
+    scheduledAt: `${record.appointment_date}T${record.start_time ?? '00:00:00'}`,
+    status: record.status as AppointmentStatus,
+    checkedInAt: record.checked_in_at ?? null,
+    consultationStartedAt: record.consultation_started_at ?? null,
+    completedAt: record.completed_at ?? null,
+    cancelledAt: record.cancelled_at ?? null,
+    cancellationReason: record.cancellation_reason ?? null,
+    createdBy: record.created_by ?? null,
+    updatedBy: record.updated_by ?? null,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+  };
+}
+
+const APPOINTMENT_SELECT = `
+  id, queue_number, customer_id, pet_id, doctor_id, service_id,
+  services(name, duration_minutes, price),
+  customers!inner(full_name, phone),
+  pets!inner(name, species, breed),
+  doctors(profiles!inner(full_name)),
+  notes, appointment_date, start_time, end_time, status,
+  checked_in_at, consultation_started_at, completed_at,
+  cancelled_at, cancellation_reason,
+  created_by, updated_by, created_at, updated_at
+`;
+
+// ============================================================
+// Appointment Service
+// ============================================================
+
 export const appointmentsService = {
+  // ============================================================
+  // CRUD Operations
+  // ============================================================
+
   async getAppointments(params: AppointmentQueryParams = {}) {
-    const { page = 1, pageSize = 20, search, status, from, to, doctorId } = params;
-    const offset = (page - 1) * pageSize;
+    const {
+      page = 1,
+      pageSize = 20,
+      status,
+      doctorId,
+      customerId,
+      petId,
+      date,
+      startDate,
+      endDate,
+      search,
+      sortBy = 'appointment_date',
+      sortOrder = 'asc',
+    } = params;
 
     let query = supabase
       .from('appointments')
-      .select(
-        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
-        { count: 'exact' },
-      );
+      .select(APPOINTMENT_SELECT, { count: 'exact' });
 
-    query = query.order('appointment_date', { ascending: true });
-
+    // Filters
     if (status) query = query.eq('status', status);
-    if (doctorId && !status) query = query.eq('doctor_id', doctorId);
-    if (from) query = query.gte('appointment_date', from);
-    if (to) query = query.lte('appointment_date', to);
+    if (doctorId) query = query.eq('doctor_id', doctorId);
+    if (customerId) query = query.eq('customer_id', customerId);
+    if (petId) query = query.eq('pet_id', petId);
+    if (date) {
+      query = query.eq('appointment_date', date);
+    } else {
+      if (startDate) query = query.gte('appointment_date', startDate);
+      if (endDate) query = query.lte('appointment_date', endDate);
+    }
 
+    // Search
     if (search) {
       const term = `%${search}%`;
       query = query.or(
-        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term}`,
+        `pets.name.ilike.${term},customers.full_name.ilike.${term},services.name.ilike.${term}`
       );
-      if (/^\d+$/.test(search)) {
-        query = query.or(`queue_number.eq.${parseInt(search, 10)}`);
-      }
     }
 
-    const res = await (typeof query.range === 'function'
-      ? query.range(offset, offset + pageSize - 1)
-      : query);
-    if (res.error) handleSupabaseError(res.error);
+    // Sort
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-    const items = Array.isArray(res.data)
-      ? (res.data as unknown as AppointmentRow[]).map(mapAppointment)
-      : [];
+    // Pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+    if (error) throw new RepositoryError('Failed to fetch appointments', error);
+
     return {
-      items,
-      total: typeof res.count === 'number' ? res.count : items.length,
+      items: (data ?? []).map(mapAppointment),
+      total: count ?? 0,
+      page,
+      pageSize,
+      totalPages: Math.ceil((count ?? 0) / pageSize),
     };
   },
 
   async getAppointmentById(id: string): Promise<Appointment | null> {
     const { data, error } = await supabase
       .from('appointments')
-      .select(
-        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
-      )
+      .select(APPOINTMENT_SELECT)
       .eq('id', id)
       .single();
 
-    if (error) handleSupabaseError(error);
-    return data ? mapAppointment(data as unknown as AppointmentRow) : null;
+    if (error) throw new RepositoryError('Failed to fetch appointment', error);
+    return data ? mapAppointment(data) : null;
   },
 
   async createAppointment(payload: AppointmentFormData): Promise<Appointment> {
+    // Validate with status machine
+    const validation = appointmentFormSchema.safeParse(payload);
+    if (!validation.success) {
+      throw new RepositoryError(
+        `Validation failed: ${validation.error.errors.map(e => e.message).join(', ')}`
+      );
+    }
+
+    // Check for conflicts
+    const conflicts = await this.detectConflicts(payload);
+    if (conflicts.length > 0) {
+      throw new RepositoryError(
+        `Scheduling conflict: ${conflicts[0].message}`
+      );
+    }
+
+    // Generate queue number
     const queueNumber = await this.generateQueueNumber(payload.appointmentDate);
+
     const insert = {
       queue_number: queueNumber,
       customer_id: payload.customerId,
@@ -213,162 +222,177 @@ export const appointmentsService = {
     const { data, error } = await supabase
       .from('appointments')
       .insert(insert)
-      .select()
+      .select(APPOINTMENT_SELECT)
       .single();
 
-    if (error) handleSupabaseError(error);
-    if (!data) throw new Error('Unable to create appointment');
+    if (error) throw new RepositoryError('Failed to create appointment', error);
+    if (!data) throw new RepositoryError('No data returned after creating appointment');
 
-    return mapAppointment(data as unknown as AppointmentRow);
+    return mapAppointment(data);
   },
 
-  async updateAppointmentStatus(id: string, status: string): Promise<Appointment> {
-    let data: AppointmentRow | null = null;
-    let error: unknown = null;
+  async updateAppointment(id: string, payload: Partial<AppointmentFormData>): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({
+        ...payload,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select(APPOINTMENT_SELECT)
+      .single();
 
-    const updateBuilder: any = supabase.from('appointments');
-    if (typeof updateBuilder.update === 'function') {
-      try {
-        const response = await updateBuilder
-          .update({ status })
-          .eq('id', id)
-          .select()
-          .single();
-        data = response.data as AppointmentRow | null;
-        error = response.error;
-      } catch (updateError) {
-        const fallbackQuery: any = supabase.from('appointments');
-        const fallbackSelect = typeof fallbackQuery.select === 'function' ? fallbackQuery.select() : fallbackQuery;
-        const fallbackEq = typeof fallbackSelect.eq === 'function' ? fallbackSelect.eq('id', id) : fallbackSelect;
-        const fallbackSingle = typeof fallbackEq.single === 'function' ? await fallbackEq.single() : null;
-        data = fallbackSingle?.data as AppointmentRow | null;
-        error = fallbackSingle?.error ?? updateError;
-      }
-    } else {
-      const fallbackQuery: any = supabase.from('appointments');
-      const fallbackSelect = typeof fallbackQuery.select === 'function' ? fallbackQuery.select() : fallbackQuery;
-      const fallbackEq = typeof fallbackSelect.eq === 'function' ? fallbackSelect.eq('id', id) : fallbackSelect;
-      const fallbackSingle = typeof fallbackEq.single === 'function' ? await fallbackEq.single() : null;
-      data = fallbackSingle?.data as AppointmentRow | null;
-      error = fallbackSingle?.error ?? null;
-    }
-
-    if (error) handleSupabaseError(error as any);
-    if (!data) {
-      data = {
-        id,
-        queue_number: null,
-        customer_id: '',
-        pet_id: '',
-        doctor_id: null,
-        service_id: '',
-        services: null,
-        customers: null,
-        pets: null,
-        doctors: null,
-        notes: null,
-        appointment_date: '',
-        start_time: null,
-        end_time: null,
-        status: status as Appointment['status'],
-        created_at: new Date().toISOString(),
-      };
-    }
-
-    if (status === 'completed') {
-      const reservation = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('appointment_id', id)
-        .limit(1);
-
-      const alreadyExists = Array.isArray(reservation.data)
-        ? reservation.data.length > 0
-        : !!reservation.data;
-
-      if (!alreadyExists) {
-        await posService.createInvoice({
-          appointment_id: id,
-          subtotal: 0,
-          discount_amount: 0,
-          loyalty_points_used: 0,
-          loyalty_discount_amount: 0,
-          total: 0,
-          payment_method: 'cash',
-          paid_amount: 0,
-          change_amount: 0,
-          status: 'draft',
-          notes: `Draft invoice for appointment ${id}`,
-          items: [],
-        });
-      }
-    }
-
-    return mapAppointment(data as unknown as AppointmentRow);
+    if (error) throw new RepositoryError('Failed to update appointment', error);
+    return mapAppointment(data);
   },
+
+  async deleteAppointment(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new RepositoryError('Failed to delete appointment', error);
+  },
+
+  // ============================================================
+  // Status Machine Operations
+  // ============================================================
+
+  async transitionStatus(id: string, newStatus: AppointmentStatus, reason?: string): Promise<Appointment> {
+    // Get current appointment
+    const current = await this.getAppointmentById(id);
+    if (!current) throw new RepositoryError('Appointment not found');
+
+    // Validate transition
+    const validation = appointmentStatusMachine.validateTransition(current.status, newStatus);
+    if (!validation.valid) {
+      throw new RepositoryError(validation.error!);
+    }
+
+    // Build update payload with timestamps
+    const update: Record<string, unknown> = {
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    };
+
+    switch (newStatus) {
+      case 'checked_in':
+        update.checked_in_at = new Date().toISOString();
+        break;
+      case 'in_consultation':
+        update.consultation_started_at = new Date().toISOString();
+        break;
+      case 'completed':
+        update.completed_at = new Date().toISOString();
+        // Auto-create invoice on completion
+        await this.ensureInvoiceOnCompletion(id);
+        break;
+      case 'cancelled':
+        update.cancelled_at = new Date().toISOString();
+        update.cancellation_reason = reason ?? null;
+        break;
+      case 'no_show':
+        update.cancelled_at = new Date().toISOString();
+        update.cancellation_reason = reason ?? 'No show';
+        break;
+    }
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .update(update)
+      .eq('id', id)
+      .select(APPOINTMENT_SELECT)
+      .single();
+
+    if (error) throw new RepositoryError('Failed to update appointment status', error);
+    return mapAppointment(data);
+  },
+
+  async getNextStatuses(id: string): Promise<AppointmentStatus[]> {
+    const current = await this.getAppointmentById(id);
+    if (!current) return [];
+    return appointmentStatusMachine.getNextStates(current.status);
+  },
+
+  // ============================================================
+  // Conflict Detection
+  // ============================================================
+
+  async detectConflicts(payload: AppointmentFormData, excludeId?: string): Promise<AppointmentConflict[]> {
+    const conflicts: AppointmentConflict[] = [];
+    const date = payload.appointmentDate;
+
+    // Doctor time conflict
+    if (payload.doctorId) {
+      const { data: doctorAppts } = await supabase
+        .from('appointments')
+        .select('id, start_time, end_time')
+        .eq('doctor_id', payload.doctorId)
+        .eq('appointment_date', date)
+        .not('status', 'in', '("cancelled","no_show")')
+        .neq('id', excludeId ?? '');
+
+      if (doctorAppts) {
+        for (const appt of doctorAppts) {
+          if (this.timesOverlap(payload.startTime, payload.endTime, appt.start_time, appt.end_time)) {
+            conflicts.push({
+              type: 'doctor',
+              conflictingAppointmentId: appt.id,
+              message: 'Doctor already has an appointment during this time',
+            });
+          }
+        }
+      }
+    }
+
+    // Pet conflict (same pet can't be in two places)
+    const { data: petAppts } = await supabase
+      .from('appointments')
+      .select('id, start_time, end_time')
+      .eq('pet_id', payload.petId)
+      .eq('appointment_date', date)
+      .not('status', 'in', '("cancelled","no_show")')
+      .neq('id', excludeId ?? '');
+
+    if (petAppts) {
+      for (const appt of petAppts) {
+        if (this.timesOverlap(payload.startTime, payload.endTime, appt.start_time, appt.end_time)) {
+          conflicts.push({
+            type: 'pet',
+            conflictingAppointmentId: appt.id,
+            message: 'This pet already has an appointment during this time',
+          });
+        }
+      }
+    }
+
+    return conflicts;
+  },
+
+  timesOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+    const s1 = parseTimeToMinutes(start1);
+    const e1 = parseTimeToMinutes(end1);
+    const s2 = parseTimeToMinutes(start2);
+    const e2 = parseTimeToMinutes(end2);
+    return s1 < e2 && s2 < e1;
+  },
+
+  // ============================================================
+  // Calendar & Availability
+  // ============================================================
 
   async getCalendarAppointments(from: string, to: string): Promise<Appointment[]> {
     const { data, error } = await supabase
       .from('appointments')
-      .select(
-        'id, queue_number, customer_id, pet_id, doctor_id, service_id, services(name), customers(full_name), pets(name), doctors(profiles(full_name)), notes, appointment_date, start_time, end_time, status, created_at',
-      )
+      .select(APPOINTMENT_SELECT)
       .gte('appointment_date', from)
       .lte('appointment_date', to)
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true });
 
-    if (error) handleSupabaseError(error);
-    return Array.isArray(data)
-      ? (data as unknown as AppointmentRow[]).map(mapAppointment)
-      : [];
-  },
-
-  async getDoctors(search?: string) {
-    const { data, error } = await supabase
-      .from('doctors')
-      .select('id, profile_id, specialization, photo_url, profiles(full_name)')
-      .order('created_at', { ascending: false });
-
-    if (error) handleSupabaseError(error);
-
-    const doctors = (Array.isArray(data) ? data : []) as unknown as DoctorRow[];
-    const normalized = search?.trim().toLowerCase() || '';
-
-    const filtered = normalized
-      ? doctors.filter((doc) => {
-          const profileName = getFirstNestedName(doc.profiles)?.toLowerCase() ?? '';
-          return (
-            profileName.includes(normalized) ||
-            String(doc.specialization ?? '').toLowerCase().includes(normalized)
-          );
-        })
-      : doctors;
-
-    return filtered.slice(0, 50).map((doc) => ({
-      id: doc.id,
-      profileId: doc.profile_id,
-      fullName: getFirstNestedName(doc.profiles) ?? 'Doctor',
-      specialization: doc.specialization,
-      photoUrl: doc.photo_url ?? null,
-    }));
-  },
-
-  async generateQueueNumber(date: string): Promise<string> {
-    try {
-      const result = await supabase.functions.invoke('generate-queue', {
-        body: { date },
-      });
-      const resultData = result.data as { queue_number?: string } | null;
-      return (
-        resultData?.queue_number ??
-        `${new Date(date).toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`
-      );
-    } catch {
-      const normalized = new Date(date);
-      const suffix = Math.floor(Math.random() * 900) + 100;
-      return `${normalized.toISOString().slice(0, 10).replace(/-/g, '')}-${suffix}`;
-    }
+    if (error) throw new RepositoryError('Failed to fetch calendar appointments', error);
+    return (data ?? []).map(mapAppointment);
   },
 
   async getDoctorAvailability(
@@ -378,8 +402,8 @@ export const appointmentsService = {
   ): Promise<DoctorAvailability> {
     const selectedDate = new Date(date);
     const dayOfWeek = selectedDate.getDay();
-    const dateString = selectedDate.toISOString().slice(0, 10);
 
+    // Get doctor's schedule for this day
     const { data: schedules, error: scheduleError } = await supabase
       .from('doctor_schedules')
       .select('start_time, end_time')
@@ -387,93 +411,223 @@ export const appointmentsService = {
       .eq('day_of_week', dayOfWeek)
       .eq('is_available', true);
 
-    if (scheduleError) handleSupabaseError(scheduleError);
+    if (scheduleError) throw new RepositoryError('Failed to fetch doctor schedule', scheduleError);
 
+    // Get already booked slots
     const { data: booked, error: bookedError } = await supabase
       .from('appointments')
-      .select('start_time')
+      .select('start_time, end_time')
       .eq('doctor_id', doctorId)
-      .eq('appointment_date', dateString)
-      .neq('status', 'cancelled');
+      .eq('appointment_date', date)
+      .not('status', 'in', '("cancelled","no_show")');
 
-    if (bookedError) handleSupabaseError(bookedError);
+    if (bookedError) throw new RepositoryError('Failed to fetch booked slots', bookedError);
 
     const bookedSlots = new Set(
-      ((booked || []) as BookedSlotRow[]).map((b) => b.start_time),
+      (booked ?? []).map((b: any) => b.start_time)
     );
 
     const availableSlots: TimeSlot[] = [];
-    const slotDuration = serviceDurationMinutes;
 
-    for (const schedule of (schedules || []) as ScheduleRow[]) {
+    for (const schedule of (schedules ?? []) as any[]) {
       const candidateSlots = buildTimeSlots(
         schedule.start_time,
         schedule.end_time,
-        slotDuration,
+        serviceDurationMinutes,
       );
+
       for (const candidate of candidateSlots) {
-        if (bookedSlots.has(candidate.startTime)) continue;
-        availableSlots.push(candidate);
+        const isBooked = (booked ?? []).some((b: any) =>
+          this.timesOverlap(
+            candidate.startTime,
+            candidate.endTime,
+            b.start_time,
+            b.end_time
+          )
+        );
+        availableSlots.push({
+          ...candidate,
+          available: !isBooked,
+        });
       }
     }
 
-    return { doctorId, date: dateString, slots: availableSlots };
+    // Get doctor name
+    const { data: doctor } = await supabase
+      .from('doctors')
+      .select('profiles!inner(full_name)')
+      .eq('id', doctorId)
+      .single();
+
+    return {
+      doctorId,
+      doctorName: (doctor as any)?.profiles?.full_name ?? 'Unknown',
+      date,
+      slots: availableSlots,
+    };
   },
 
-  async searchServiceIds(search: string): Promise<string[]> {
-    const { data, error } = await supabase
-      .from('services')
-      .select('id')
-      .ilike('name', `%${search}%`)
-      .limit(50);
+  // ============================================================
+  // Statistics
+  // ============================================================
 
-    if (error) handleSupabaseError(error);
-    return Array.isArray(data)
-      ? (data as { id: string }[]).map((row) => row.id)
-      : [];
+  async getStats(date?: string): Promise<AppointmentStats> {
+    const today = date ?? new Date().toISOString().slice(0, 10);
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('status, start_time, end_time')
+      .eq('appointment_date', today);
+
+    if (error) throw new RepositoryError('Failed to fetch appointment stats', error);
+
+    const appointments = (data ?? []) as any[];
+    const stats: AppointmentStats = {
+      totalToday: appointments.length,
+      completed: appointments.filter((a) => a.status === 'completed').length,
+      cancelled: appointments.filter((a) => a.status === 'cancelled').length,
+      noShow: appointments.filter((a) => a.status === 'no_show').length,
+      pending: appointments.filter((a) =>
+        ['scheduled', 'confirmed', 'checked_in', 'in_consultation'].includes(a.status)
+      ).length,
+      averageDuration: 0,
+      revenueToday: 0,
+    };
+
+    // Calculate average duration
+    const completedWithDuration = appointments.filter(
+      (a) => a.status === 'completed' && a.start_time && a.end_time
+    );
+    if (completedWithDuration.length > 0) {
+      const totalMinutes = completedWithDuration.reduce((sum: number, a: any) => {
+        return sum + (parseTimeToMinutes(a.end_time) - parseTimeToMinutes(a.start_time));
+      }, 0);
+      stats.averageDuration = Math.round(totalMinutes / completedWithDuration.length);
+    }
+
+    return stats;
+  },
+
+  // ============================================================
+  // Doctors & Services
+  // ============================================================
+
+  async getDoctors(search?: string) {
+    let query = supabase
+      .from('doctors')
+      .select('id, profile_id, specialization, photo_url, profiles!inner(full_name)')
+      .order('created_at', { ascending: false });
+
+    if (search) {
+      query = query.ilike('profiles.full_name', `%${search}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new RepositoryError('Failed to fetch doctors', error);
+
+    return ((data ?? []) as any[]).map((doc) => ({
+      id: doc.id,
+      profileId: doc.profile_id,
+      fullName: doc.profiles?.full_name ?? 'Doctor',
+      specialization: doc.specialization,
+      photoUrl: doc.photo_url ?? null,
+    }));
   },
 
   async getServices(search?: string): Promise<AppointmentServiceOption[]> {
     let query = supabase
       .from('services')
-      .select('id, name, duration_minutes, price')
+      .select('id, name, duration_minutes, price, category')
       .order('name');
 
     if (search) query = query.ilike('name', `%${search}%`);
 
-    let result: unknown = await query;
-    if (result && typeof result === 'object' && 'data' in (result as object)) {
-      const resolved = result as { data?: ServiceRow[]; error?: unknown };
-      const error = resolved.error;
-      if (error) handleSupabaseError(error);
-      return Array.isArray(resolved.data)
-        ? (resolved.data as unknown as ServiceRow[]).map((row) => ({
-            id: row.id,
-            name: row.name,
-            durationMinutes: row.duration_minutes,
-            price: Number(row.price),
-          }))
-        : [];
+    const { data, error } = await query;
+    if (error) throw new RepositoryError('Failed to fetch services', error);
+
+    return ((data ?? []) as any[]).map((row) => ({
+      id: row.id,
+      name: row.name,
+      durationMinutes: row.duration_minutes,
+      price: Number(row.price),
+      category: row.category,
+    }));
+  },
+
+  // ============================================================
+  // Queue Number Generation
+  // ============================================================
+
+  async generateQueueNumber(date: string): Promise<string> {
+    try {
+      const result = await supabase.functions.invoke('generate-queue', {
+        body: { date },
+      });
+      const resultData = result.data as { queue_number?: string } | null;
+      if (resultData?.queue_number) return resultData.queue_number;
+    } catch {
+      // Fallback: generate locally
     }
 
-    const fallback = result as { order?: () => Promise<unknown> };
-    if (fallback && typeof fallback.order === 'function') {
-      result = await fallback.order();
-    }
+    const dateStr = date.replace(/-/g, '');
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `${dateStr}-${random}`;
+  },
 
-    const data = (result as { data?: ServiceRow[]; error?: unknown }).data;
-    const error = (result as { error?: unknown }).error;
+  // ============================================================
+  // Invoice Auto-creation
+  // ============================================================
 
-    if (error) handleSupabaseError(error);
+  async ensureInvoiceOnCompletion(appointmentId: string): Promise<void> {
+    const { data: existing } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('appointment_id', appointmentId)
+      .limit(1);
 
-    return Array.isArray(data)
-      ? (data as unknown as ServiceRow[]).map((row) => ({
-          id: row.id,
-          name: row.name,
-          durationMinutes: row.duration_minutes,
-          price: Number(row.price),
-        }))
-      : [];
+    if (existing && existing.length > 0) return;
+
+    // Import dynamically to avoid circular dependency
+    const { posService } = await import('@/features/pos/pos.service');
+    await posService.createInvoice({
+      appointment_id: appointmentId,
+      subtotal: 0,
+      discount_amount: 0,
+      loyalty_points_used: 0,
+      loyalty_discount_amount: 0,
+      total: 0,
+      payment_method: 'cash',
+      paid_amount: 0,
+      change_amount: 0,
+      status: 'draft',
+      notes: `Auto-generated invoice for completed appointment`,
+      items: [],
+    });
+  },
+
+  // ============================================================
+  // Realtime Subscription
+  // ============================================================
+
+  subscribeToChanges(callback: (payload: any) => void) {
+    const subscription = supabase
+      .channel('appointments-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'appointments' },
+        (payload) => {
+          callback({
+            eventType: payload.eventType,
+            new: payload.new ? mapAppointment(payload.new) : null,
+            old: payload.old ? mapAppointment(payload.old) : null,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   },
 };
 
