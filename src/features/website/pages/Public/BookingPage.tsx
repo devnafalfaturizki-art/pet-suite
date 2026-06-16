@@ -250,7 +250,7 @@ export default function BookingPage() {
 
       {/* Step 0: Contact Info */}
       {step === 0 && (
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Contact Information</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function BookingPage() {
 
       {/* Step 1: Service */}
       {step === 1 && (
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Select Service</h2>
           {servicesLoading ? (
             <div className="space-y-3">
@@ -315,7 +315,7 @@ export default function BookingPage() {
 
       {/* Step 2: Doctor */}
       {step === 2 && (
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Select Doctor</h2>
           {doctorsLoading ? (
             <div className="space-y-3">
@@ -356,7 +356,7 @@ export default function BookingPage() {
 
       {/* Step 3: Date & Time */}
       {step === 3 && (
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Select Date & Time</h2>
           <div className="space-y-2">
             <label className="block text-sm font-medium">Date</label>
@@ -404,7 +404,7 @@ export default function BookingPage() {
 
       {/* Step 4: Confirm */}
       {step === 4 && (
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Confirm Booking</h2>
           <div className="space-y-3 rounded-lg bg-slate-50 p-4">
             <div className="flex justify-between">

@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: (count, error: any) => error?.code !== '42501' && error?.code !== 'PGRST116' && count < 2,
       staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
     },

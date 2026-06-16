@@ -83,13 +83,13 @@ export function CommandPalette({ open, onClose, routes }: CommandPaletteProps) {
             .limit(5)
         ]);
 
-        const customerItems = customerResponse.data?.map((customer) => ({
+        const customerItems = customerResponse.data?.map((customer: any) => ({
           label: `Customer: ${customer.full_name}`,
           path: `/staff/customers/${customer.id}`,
           subtitle: 'Customer record'
         })) ?? [];
 
-        const petItems = petResponse.data?.map((pet) => ({
+        const petItems = petResponse.data?.map((pet: any) => ({
           label: `Pet: ${pet.name}`,
           path: `/staff/pets/${pet.id}`,
           subtitle: 'Pet profile'

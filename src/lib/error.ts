@@ -22,9 +22,13 @@ const SUPABASE_ERROR_MESSAGES: Record<string, string> = {
   'PGRST301': 'Row-level security policy violation.',
 };
 
-export function handleSupabaseError(error: { code?: string; message: string }): never {
-  const message = SUPABASE_ERROR_MESSAGES[error.code ?? ''] ?? error.message;
-  throw new AppError(message, error.code ?? 'UNKNOWN', error);
+export function handleSupabaseError(error: unknown): never {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const err = error as { code?: string; message: string };
+    const message = SUPABASE_ERROR_MESSAGES[err.code ?? ''] ?? err.message;
+    throw new AppError(message, err.code ?? 'UNKNOWN', error);
+  }
+  throw new AppError('An unexpected error occurred.', 'UNKNOWN', error);
 }
 
 export function isNetworkError(error: unknown): boolean {

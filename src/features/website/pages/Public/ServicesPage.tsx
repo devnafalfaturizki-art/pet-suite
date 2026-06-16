@@ -59,7 +59,7 @@ export default function ServicesPagePublic() {
           <h2 className="text-2xl font-semibold mb-4">{category}</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {services.map((svc: any) => (
-              <Card key={svc.id} className="p-6">
+              <Card key={svc.id} className="p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
                 <h3 className="text-lg font-semibold">{svc.name}</h3>
                 <p className="mt-2 text-sm text-slate-600">{svc.description}</p>
                 <div className="mt-4 flex items-center justify-between text-sm">

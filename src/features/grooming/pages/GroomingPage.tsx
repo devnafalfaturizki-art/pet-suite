@@ -166,7 +166,7 @@ export default function GroomingPage() {
   }, [todaySchedule]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Grooming"
         description="Manage grooming services and schedule styling sessions for pets."
@@ -219,7 +219,7 @@ export default function GroomingPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {todayCards.map((record) => (
-                <Card key={record.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Card key={record.id} className="rounded-2xl p-4 hover:shadow-md">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-semibold text-slate-900">{record.petName ?? record.petId}</p>
@@ -227,15 +227,9 @@ export default function GroomingPage() {
                     </div>
                     <Badge
                       variant={
-                        record.status === 'completed' ? 'default' :
-                        record.status === 'in-progress' ? 'secondary' :
-                        record.status === 'cancelled' ? 'destructive' : 'outline'
-                      }
-                      className={
-                        record.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        record.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                        record.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-amber-100 text-amber-800'
+                        record.status === 'completed' ? 'emerald' :
+                        record.status === 'in-progress' ? 'blue' :
+                        record.status === 'cancelled' ? 'rose' : 'amber'
                       }
                     >
                       {record.status}
@@ -303,7 +297,7 @@ export default function GroomingPage() {
             </Button>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <DataTable
               columns={[
                 { key: 'petName', header: 'Pet', render: (record: any) => record.petName ?? record.petId },
@@ -316,15 +310,9 @@ export default function GroomingPage() {
                   render: (record: any) => (
                     <Badge
                       variant={
-                        record.status === 'completed' ? 'default' :
-                        record.status === 'in-progress' ? 'secondary' :
-                        record.status === 'cancelled' ? 'destructive' : 'outline'
-                      }
-                      className={
-                        record.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        record.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                        record.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-amber-100 text-amber-800'
+                        record.status === 'completed' ? 'emerald' :
+                        record.status === 'in-progress' ? 'blue' :
+                        record.status === 'cancelled' ? 'rose' : 'amber'
                       }
                     >
                       {record.status}
@@ -369,7 +357,7 @@ export default function GroomingPage() {
           </div>
 
           {showAddService && (
-            <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Name</label>
@@ -399,7 +387,7 @@ export default function GroomingPage() {
             </Card>
           )}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <DataTable
               columns={[
                 { key: 'name', header: 'Name' },

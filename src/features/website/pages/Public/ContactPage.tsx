@@ -127,7 +127,7 @@ export default function ContactPagePublic() {
         </div>
 
         {/* Right: Contact Form */}
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 rounded-2xl">
           <h2 className="text-xl font-semibold">Send us a message</h2>
           <div className="space-y-2">
             <label className="block text-sm font-medium">Name *</label>

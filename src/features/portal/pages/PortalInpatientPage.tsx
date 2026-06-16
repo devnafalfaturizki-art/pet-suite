@@ -17,7 +17,7 @@ export default function PortalInpatientPage() {
   useDocumentTitle('Inpatient Status');
 
   const activeRecords = useMemo(
-    () => (inpatientQuery.data || []).filter((record) => record.status === 'admitted'),
+    () => (inpatientQuery.data || []).filter((record: any) => record.status === 'admitted'),
     [inpatientQuery.data]
   );
 
@@ -48,7 +48,7 @@ export default function PortalInpatientPage() {
         />
       ) : (
         <div className="space-y-6">
-          {activeRecords.map((record) => (
+          {activeRecords.map((record: any) => (
             <Card key={record.id} className="space-y-6 p-6">
               <div className="grid gap-6 lg:grid-cols-[1.3fr,0.9fr]">
                 <div className="space-y-4">
@@ -125,7 +125,7 @@ function InpatientReportList({ recordId, customerId }: { recordId: string; custo
 
   return (
     <div className="space-y-4">
-      {observationsQuery.data.map((observation) => (
+      {observationsQuery.data.map((observation: any) => (
         <Card key={observation.id} className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>

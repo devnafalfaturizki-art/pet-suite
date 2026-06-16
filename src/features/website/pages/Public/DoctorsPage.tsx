@@ -40,20 +40,20 @@ export default function DoctorsPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {data.map((doc: any) => (
-          <Card key={doc.id} className="p-6 text-center">
+          <Card key={doc.id} className="p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
             {doc.photo_url ? (
               <img
                 src={doc.photo_url}
                 alt={doc.full_name}
-                className="mx-auto h-28 w-28 rounded-full object-cover"
+                className="mx-auto h-28 w-28 rounded-full object-cover ring-4 ring-blue-100"
               />
             ) : (
-              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-blue-100 text-3xl font-bold text-blue-600">
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-3xl font-bold text-white">
                 {doc.full_name?.charAt(0)?.toUpperCase() || 'D'}
               </div>
             )}
             <h3 className="mt-4 text-lg font-semibold">{doc.full_name}</h3>
-            <Badge variant="secondary" className="mt-2">
+            <Badge variant="blue" className="mt-2">
               {doc.specialization}
             </Badge>
             {doc.bio && (

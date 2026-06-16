@@ -4,22 +4,35 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 function createFallbackSupabaseClient() {
-  const createError = () => new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel.');
-
-  const createQueryBuilder = () => ({
-    select: () => createQueryBuilder(),
-    insert: () => createQueryBuilder(),
-    update: () => createQueryBuilder(),
-    delete: () => createQueryBuilder(),
-    eq: () => createQueryBuilder(),
-    gte: () => createQueryBuilder(),
-    lte: () => createQueryBuilder(),
-    order: () => createQueryBuilder(),
-    in: () => createQueryBuilder(),
-    limit: () => createQueryBuilder(),
-    single: async () => ({ data: null, error: createError() }),
-    maybeSingle: async () => ({ data: null, error: createError() }),
+  const createError = (): { code: string; message: string } => ({
+    code: 'CONFIG_ERROR',
+    message: 'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel.',
   });
+
+  const createQueryBuilder = (): any => {
+    const builder: any = {
+      select: () => createQueryBuilder(),
+      insert: () => createQueryBuilder(),
+      update: () => createQueryBuilder(),
+      delete: () => createQueryBuilder(),
+      eq: () => createQueryBuilder(),
+      gte: () => createQueryBuilder(),
+      lte: () => createQueryBuilder(),
+      gt: () => createQueryBuilder(),
+      lt: () => createQueryBuilder(),
+      neq: () => createQueryBuilder(),
+      order: () => createQueryBuilder(),
+      in: () => createQueryBuilder(),
+      limit: () => createQueryBuilder(),
+      range: () => createQueryBuilder(),
+      or: () => createQueryBuilder(),
+      ilike: () => createQueryBuilder(),
+      textSearch: () => createQueryBuilder(),
+      single: async () => ({ data: null, error: createError() }),
+      maybeSingle: async () => ({ data: null, error: createError() }),
+    };
+    return builder;
+  };
 
   return {
     auth: {
@@ -39,6 +52,7 @@ function createFallbackSupabaseClient() {
       }),
     },
     from: () => createQueryBuilder(),
+    rpc: () => createQueryBuilder(),
     storage: {
       from: () => ({
         upload: async () => ({ data: null, error: createError() }),
@@ -51,11 +65,14 @@ function createFallbackSupabaseClient() {
       subscribe: () => ({ unsubscribe: () => undefined }),
     }),
     removeChannel: () => undefined,
+    functions: {
+      invoke: async () => ({ data: null, error: createError() }),
+    },
   };
 }
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const supabase = isSupabaseConfigured
+export const supabase: any = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createFallbackSupabaseClient();

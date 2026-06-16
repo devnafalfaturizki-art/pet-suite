@@ -114,11 +114,37 @@ export default function PublicLayout() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-slate-50 py-12 px-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="max-w-6xl mx-auto text-center text-sm text-slate-500 dark:text-slate-400">
-          <p className="font-semibold text-slate-700 dark:text-slate-300">{clinicName}</p>
-          {clinicAddress && <p className="mt-1">{clinicAddress}</p>}
-          <p className="mt-3">&copy; {new Date().getFullYear()} {clinicName}. All rights reserved.</p>
+      <footer className="bg-slate-900 text-white py-12 px-4">
+        <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
+          <div>
+            <h3 className="text-lg font-semibold mb-3">{clinicName}</h3>
+            {clinicAddress && <p className="text-sm text-slate-400">{clinicAddress}</p>}
+            {clinic?.phone && <p className="text-sm text-slate-400 mt-1">{clinic.phone}</p>}
+            {clinic?.email && <p className="text-sm text-slate-400 mt-1">{clinic.email}</p>}
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Jam Buka</h3>
+            <p className="text-sm text-slate-400">Senin - Jumat: 08:00 - 20:00</p>
+            <p className="text-sm text-slate-400">Sabtu: 08:00 - 17:00</p>
+            <p className="text-sm text-slate-400">Minggu: 09:00 - 15:00</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Navigasi</h3>
+            <div className="space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="block text-sm text-slate-400 hover:text-white transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
+          &copy; {new Date().getFullYear()} {clinicName}. All rights reserved.
         </div>
       </footer>
     </div>

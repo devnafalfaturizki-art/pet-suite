@@ -61,7 +61,7 @@ export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
         .limit(5);
 
       if (isMounted) {
-        setNotifications((data || []).map((item) => ({ ...item, isRead: false })));
+        setNotifications((data || []).map((item: any) => ({ ...item, isRead: false })));
         setIsLoadingNotifications(false);
       }
     }
@@ -73,7 +73,7 @@ export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications_log', filter: `user_id=eq.${user.id}` },
-        ({ new: newRecord }) => {
+        ({ new: newRecord }: { new: any }) => {
           if (!newRecord || !isMounted) {
             return;
           }

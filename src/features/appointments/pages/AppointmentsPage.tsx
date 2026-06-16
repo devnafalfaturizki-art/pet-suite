@@ -70,7 +70,7 @@ export default function AppointmentsPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       <PageHeader
         title="Appointments"
         description="Manage patient appointments, filter by doctor, status, and date range."
@@ -94,7 +94,7 @@ export default function AppointmentsPage() {
         onPageChange={onPageChange}
         onRowClick={(record) => navigate(`/staff/appointments/${record.id}`)}
         filtersSlot={
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="bg-white rounded-2xl border p-4 mb-4 grid gap-3 md:grid-cols-5">
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
               <Search className="w-4 h-4 text-slate-500" />
               <Input

@@ -60,7 +60,7 @@ export const useModuleStore = create<ModuleState>((set) => ({
       }
 
       const status = (data || []).reduce(
-        (acc, row: { key: string; is_enabled: boolean }) => ({
+        (acc: Record<string, boolean>, row: { key: string; is_enabled: boolean }) => ({
           ...acc,
           [row.key]: row.is_enabled,
         }),

@@ -50,12 +50,12 @@ export default function ArticlesPagePublic() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {items.map((a: any) => (
-          <Card key={a.id} className="overflow-hidden flex flex-col">
+          <Card key={a.id} className="overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
             {a.cover_url ? (
-              <img src={a.cover_url} alt={a.title} className="h-48 w-full object-cover" />
+              <img src={a.cover_url} alt={a.title} className="h-48 w-full object-cover aspect-video" />
             ) : (
-              <div className="h-48 w-full bg-slate-200 flex items-center justify-center text-slate-400">
-                No Image
+              <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-400 aspect-video">
+                <FileText className="h-12 w-12" />
               </div>
             )}
             <div className="p-4 flex flex-col flex-1">
