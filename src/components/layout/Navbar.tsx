@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui';
 import { useNavigate } from 'react-router-dom';
 import { useUIStore } from '@/stores/ui.store';
-import { useAuthActions } from '@/features/auth/auth.hooks';
+import { useAuth } from '@/shared/auth/use-auth';
 import { supabase } from '@/lib/supabase';
 
 interface NotificationItem {
@@ -27,7 +27,7 @@ interface NavbarProps {
 
 export function Navbar({ onOpenCommand, onToggleSidebar }: NavbarProps) {
   const user = useAuthStore((state) => state.user);
-  const { signOut } = useAuthActions();
+  const { signOut } = useAuth();
   const setTheme = useUIStore((state) => state.setTheme);
   const activeTheme = useUIStore((state) => state.activeTheme);
   const [isProfileOpen, setIsProfileOpen] = useState(false);

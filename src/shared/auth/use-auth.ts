@@ -52,6 +52,15 @@ export function useAuth() {
     navigate('/login');
   }, [clearAuth, navigate]);
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    // In demo mode, password reset is a no-op
+    if (isDemoMode()) {
+      return;
+    }
+    // In production, this would call the auth provider
+    console.warn('[Auth] Password reset requested for:', email);
+  }, []);
+
   const initialize = useCallback(async () => {
     setInitializing(true);
     try {
@@ -75,6 +84,7 @@ export function useAuth() {
     signIn,
     demoSignIn,
     signOut,
+    sendPasswordReset,
     initialize,
     isAuthenticated: !!user,
   };

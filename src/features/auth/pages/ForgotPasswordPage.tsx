@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
-import { useAuthActions } from '../auth.hooks';
+import { useAuth } from '@/shared/auth/use-auth';
 
 export function ForgotPasswordPage() {
-  const { sendPasswordReset } = useAuthActions();
+  const { sendPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
