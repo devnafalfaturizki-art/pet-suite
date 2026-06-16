@@ -1,4 +1,4 @@
-export type UserRole = 'owner' | 'doctor' | 'staff' | 'customer';
+export type UserRole = 'owner' | 'doctor' | 'staff' | 'cashier' | 'customer';
 
 export type ModuleKey =
   | 'clinic'

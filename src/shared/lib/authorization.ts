@@ -66,6 +66,12 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'customer:create', 'customer:read', 'customer:update',
     'pet:create', 'pet:read', 'pet:update',
   ],
+  cashier: [
+    'appointment:read',
+    'billing:create', 'billing:read', 'billing:update',
+    'customer:read',
+    'pet:read',
+  ],
   customer: [
     'appointment:read',
     'billing:read',

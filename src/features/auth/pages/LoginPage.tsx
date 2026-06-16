@@ -1,76 +1,138 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button, Card, Input } from '@/components/ui';
-import { useAuthActions } from '../auth.hooks';
+import { useAuth } from '@/shared/auth/use-auth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { PawPrint, ShieldCheck, Stethoscope, ShoppingCart, Users, Heart, LogIn } from 'lucide-react';
+import type { UserRole } from '@/types';
+
+interface RoleOption {
+  role: UserRole;
+  label: string;
+  description: string;
+  icon: typeof ShieldCheck;
+  color: string;
+}
+
+const ROLES: RoleOption[] = [
+  {
+    role: 'owner',
+    label: 'Owner',
+    description: 'Full access — revenue, reports, settings',
+    icon: ShieldCheck,
+    color: 'from-indigo-500 to-indigo-600',
+  },
+  {
+    role: 'doctor',
+    label: 'Doctor',
+    description: 'Medical records, examinations, vaccinations',
+    icon: Stethoscope,
+    color: 'from-emerald-500 to-emerald-600',
+  },
+  {
+    role: 'staff',
+    label: 'Receptionist',
+    description: 'Appointments, customers, scheduling',
+    icon: Users,
+    color: 'from-blue-500 to-blue-600',
+  },
+  {
+    role: 'cashier',
+    label: 'Cashier',
+    description: 'POS, invoices, payments',
+    icon: ShoppingCart,
+    color: 'from-amber-500 to-amber-600',
+  },
+  {
+    role: 'customer',
+    label: 'Customer',
+    description: 'Portal — appointments, invoices, pets',
+    icon: Heart,
+    color: 'from-rose-500 to-rose-600',
+  },
+];
 
 export function LoginPage() {
-  const location = useLocation();
-  const { signIn } = useAuthActions();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const { demoSignIn, isDemoMode } = useAuth();
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  useDocumentTitle('Login');
 
-  const fromPath = (location.state as { from?: string } | null)?.from ?? '/dashboard';
-
-  const handleSubmit = async () => {
+  const handleRoleSelect = async (role: UserRole) => {
+    setIsLoading(role);
     setError(null);
-    setIsLoading(true);
-
     try {
-      await signIn(email, password, fromPath);
+      await demoSignIn({ role });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in');
-    } finally {
-      setIsLoading(false);
+      setError(err instanceof Error ? err.message : 'Login failed');
+      setIsLoading(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto w-full max-w-md">
-        <Card className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-semibold">Welcome back</h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Sign in to access your PetCare Suite workspace.</p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg mb-4">
+            <PawPrint className="h-7 w-7 text-white" />
           </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Email</label>
-              <Input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required placeholder="you@example.com" />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Password</label>
-              <div className="relative">
-                <Input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  className="pr-20"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-3 text-sm text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </div>
-            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button type="button" onClick={handleSubmit} className="w-full sm:w-auto" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign in'}
-              </Button>
-              <Link to="/forgot-password" className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
-                Forgot password?
-              </Link>
-            </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            PetCare Suite
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            {isDemoMode
+              ? 'Select a role to explore the platform'
+              : 'Sign in to your account'}
+          </p>
+        </div>
+
+        {/* Role Cards */}
+        <div className="space-y-3">
+          {ROLES.map((roleOption) => {
+            const Icon = roleOption.icon;
+            const isActive = isLoading === roleOption.role;
+
+            return (
+              <button
+                key={roleOption.role}
+                onClick={() => handleRoleSelect(roleOption.role)}
+                disabled={isLoading !== null}
+                className="w-full flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700"
+              >
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${roleOption.color} shadow-sm`}>
+                  <Icon className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">
+                      {roleOption.label}
+                    </span>
+                    {isActive && (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    {roleOption.description}
+                  </p>
+                </div>
+                <LogIn className="h-5 w-5 text-slate-300 dark:text-slate-600 shrink-0" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/30 dark:bg-rose-900/20 dark:text-rose-400">
+            {error}
           </div>
-        </Card>
+        )}
+
+        {/* Footer */}
+        <p className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
+          {isDemoMode
+            ? 'Demo mode — no login required. All data is local.'
+            : 'PetCare Suite — Veterinary Clinic Management Platform'}
+        </p>
       </div>
     </div>
   );
