@@ -6,3 +6,7 @@ export { FileUpload } from './FileUpload';
 export { PageHeader } from './PageHeader';
 export { StatusBadge } from './StatusBadge';
 export { default as PageSkeleton } from './PageSkeleton';
+export { PageLoader } from './PageLoader';
+export { PageTransition } from './PageTransition';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as SuspenseWithTimeout } from './SuspenseWithTimeout';

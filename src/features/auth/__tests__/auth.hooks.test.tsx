@@ -34,14 +34,13 @@ function createWrapper() {
 
 describe('useAuthActions', () => {
   beforeEach(() => {
-    useAuthStore.setState({ user: null, role: null, session: null, isInitializing: false });
+    useAuthStore.setState({ user: null, role: null, isInitializing: false });
   });
 
   it('signIn calls service and updates store', async () => {
     const { authService } = await import('../auth.service');
     const mockUser = { id: 'u1', email: 'test@test.com', fullName: 'Test', role: 'owner' as const, isActive: true };
-    const mockSession = { access_token: 'token' } as any;
-    (authService.signIn as any).mockResolvedValue({ user: mockUser, session: mockSession });
+    (authService.signIn as any).mockResolvedValue({ user: mockUser });
 
     const { result } = renderHook(() => useAuthActions(), { wrapper: createWrapper() });
 
@@ -58,7 +57,6 @@ describe('useAuthActions', () => {
     useAuthStore.setState({
       user: { id: 'u1', email: 'test@test.com', fullName: 'Test', role: 'owner', isActive: true },
       role: 'owner',
-      session: { access_token: 'token' } as any
     });
 
     const { authService } = await import('../auth.service');

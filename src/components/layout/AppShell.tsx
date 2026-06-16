@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Menu } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { CommandPalette } from '@/components/common/CommandPalette';
+import { PageTransition } from '@/components/common/PageTransition';
 import { useUIStore } from '@/stores/ui.store';
 import { useModuleStore } from '@/stores/module.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { getCommandRoutes } from '@/router/routes';
 import { useGlobalShortcuts } from '@/shared/hooks/useKeyboardShortcuts';
+import { Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 const breadcrumbLabelMap: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -46,7 +49,7 @@ const breadcrumbLabelMap: Record<string, string> = {
   broadcast: 'Broadcast',
   calendar: 'Calendar',
   create: 'Create',
-  transactions: 'Transactions'
+  transactions: 'Transactions',
 };
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
@@ -73,7 +76,6 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
 
   useEffect(() => {
     fetchModuleStatus().catch(() => {
-      // Module fetch failure should not block the app
       console.warn('[AppShell] Failed to fetch module status, using defaults');
     });
   }, [fetchModuleStatus]);
@@ -89,7 +91,6 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
         setCommandPaletteOpen(true);
       }
     };
-
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [setCommandPaletteOpen]);
@@ -103,8 +104,11 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
     }));
 
   return (
-    <div className={activeTheme === 'dark' ? 'min-h-screen bg-slate-950 text-slate-100' : 'min-h-screen bg-slate-50 text-slate-900'}>
-      <div className="lg:flex overflow-hidden">
+    <div className={cn(
+      'min-h-screen',
+      activeTheme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+    )}>
+      <div className="lg:flex">
         <Sidebar
           activePath={path}
           onNavigate={(route) => {
@@ -116,12 +120,16 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={toggleSidebar}
         />
-        <div className="flex-1 lg:min-w-0 lg:ml-0">
+        <div className={cn(
+          'flex min-h-screen flex-1 flex-col transition-all duration-300',
+          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        )}>
           <Navbar
             onOpenCommand={() => setCommandPaletteOpen(true)}
             onToggleSidebar={() => setIsMobileSidebarOpen((open) => !open)}
           />
-          <div className="border-b border-slate-200/60 bg-white/50 px-4 py-2.5 text-sm text-slate-500 dark:border-slate-800/60 dark:bg-slate-950/50 dark:text-slate-400 lg:px-6">
+          {/* Breadcrumb */}
+          <div className="border-b border-slate-200/60 bg-white/80 px-4 py-2.5 text-sm text-slate-500 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/80 dark:text-slate-400 lg:px-6">
             <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
               {breadcrumbSegments.length ? (
                 breadcrumbSegments.map((segment, index) => (
@@ -129,11 +137,13 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
                     <button
                       type="button"
                       onClick={() => navigate(segment.path)}
-                      className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      className="transition-colors hover:text-slate-900 dark:hover:text-slate-100"
                     >
                       {segment.label}
                     </button>
-                    {index < breadcrumbSegments.length - 1 && <ChevronRight className="h-3.5 w-3.5" />}
+                    {index < breadcrumbSegments.length - 1 && (
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+                    )}
                   </span>
                 ))
               ) : (
@@ -141,24 +151,21 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
               )}
             </nav>
           </div>
-          <main data-main-content className={`px-4 py-6 sm:px-6 lg:px-8 animate-fade-in ${isSidebarCollapsed ? 'lg:pl-24' : ''}`}>
-            {children ?? <Outlet />}
+          <main
+            data-main-content
+            className="flex-1 px-4 py-6 sm:px-6 lg:px-8"
+          >
+            <PageTransition>
+              {children ?? <Outlet />}
+            </PageTransition>
           </main>
         </div>
       </div>
-      {isMobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-          role="button"
-          aria-label="Close sidebar"
-          tabIndex={0}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setIsMobileSidebarOpen(false);
-          }}
-        />
-      )}
-      <CommandPalette open={isPaletteOpen} onClose={() => setCommandPaletteOpen(false)} routes={getCommandRoutes(role, modules)} />
+      <CommandPalette
+        open={isPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        routes={getCommandRoutes(role, modules)}
+      />
     </div>
   );
 }

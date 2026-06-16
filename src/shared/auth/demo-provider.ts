@@ -27,6 +27,7 @@ const DEMO_USERS: Record<UserRole, { name: string; email: string }> = {
   owner: { name: 'Alex Johnson', email: 'owner@petsuite.com' },
   doctor: { name: 'Dr. Sarah Chen', email: 'doctor@petsuite.com' },
   staff: { name: 'Mike Rodriguez', email: 'staff@petsuite.com' },
+  cashier: { name: 'Lisa Wong', email: 'cashier@petsuite.com' },
   customer: { name: 'Emily Davis', email: 'customer@petsuite.com' },
 };
 
